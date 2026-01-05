@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Management System</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,24 +19,23 @@
             <div class="logo-area">
                 <i class="fa-solid fa-cube fa-3x"></i>
             </div>
-            <h2>Login</h2>
+            <h2>Welcome Back</h2>
+            <p style="color: #64748b; margin-bottom: 20px;">Enter your credentials to access your dashboard.</p>
             
-            <label>Username (Email)</label>
-            <input type="email" id="email" class="auth-input" />
-            
-            <label>Password</label>
-            <input type="password" id="password" class="auth-input" />
-            
-            <div class="auth-links">
-                <a href="#">Forgot Password?</a>
+            <div style="text-align: left;">
+                <label style="font-weight: 600; font-size: 0.9rem;">Email Address</label>
+                <input type="email" id="email" class="auth-input" placeholder="name@company.com" />
+                
+                <label style="font-weight: 600; font-size: 0.9rem;">Password</label>
+                <input type="password" id="password" class="auth-input" placeholder="••••••••" />
             </div>
 
             <button onclick="handleLogin()" class="btn-block">Login</button>
-            <p id="login-msg" class="error-text"></p>
+            <p id="login-msg" style="color: red; margin-top: 10px; font-size: 0.9rem;"></p>
             
-            <div class="auth-footer">
-                <span>Don't have an account?</span> 
-                <a href="#" onclick="toggleLoginMode('signup')">Sign Up</a>
+            <div style="margin-top: 20px; font-size: 0.9rem;">
+                <span style="color: #64748b;">Don't have an account?</span> 
+                <a href="#" onclick="toggleLoginMode('signup')" style="color: var(--accent); font-weight: bold; text-decoration: none;">Sign Up</a>
             </div>
         </div>
     </section>
@@ -45,40 +47,44 @@
             </div>
             <h2>Create Account</h2>
             
-            <label>Full Name</label>
-            <input type="text" id="signup-name" class="auth-input" />
+            <div style="text-align: left;">
+                <label style="font-weight: 600; font-size: 0.9rem;">Full Name</label>
+                <input type="text" id="signup-name" class="auth-input" placeholder="John Doe" />
 
-            <label>Email</label>
-            <input type="email" id="signup-email" class="auth-input" />
-            
-            <label>Password</label>
-            <input type="password" id="signup-password" class="auth-input" />
+                <label style="font-weight: 600; font-size: 0.9rem;">Email Address</label>
+                <input type="email" id="signup-email" class="auth-input" placeholder="name@company.com" />
+                
+                <label style="font-weight: 600; font-size: 0.9rem;">Password</label>
+                <input type="password" id="signup-password" class="auth-input" placeholder="Create a password" />
+            </div>
 
-            <button onclick="handleSignup()" class="btn-block">Sign Up</button>
-            <p id="signup-msg" class="error-text"></p>
+            <button onclick="handleSignup()" class="btn-block">Create Account</button>
+            <p id="signup-msg" style="margin-top: 10px; font-size: 0.9rem;"></p>
             
-            <div class="auth-footer">
-                <span>Already have an account?</span> 
-                <a href="#" onclick="toggleLoginMode('login')">Log In</a>
+            <div style="margin-top: 20px; font-size: 0.9rem;">
+                <span style="color: #64748b;">Already have an account?</span> 
+                <a href="#" onclick="toggleLoginMode('login')" style="color: var(--accent); font-weight: bold; text-decoration: none;">Log In</a>
             </div>
         </div>
     </section>
 
     <section id="admin-view" class="hidden-view layout-container">
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <i class="fa-solid fa-bars"></i>
+            <div>
+                <div class="sidebar-header">
+                    <i class="fa-solid fa-cube"></i> Admin Panel
+                </div>
+                <ul class="sidebar-menu">
+                    <li onclick="switchAdminTab('users')" class="active-tab">
+                        <i class="fa-solid fa-users"></i> <span>Users</span>
+                    </li>
+                    <li onclick="switchAdminTab('tasks')">
+                        <i class="fa-solid fa-layer-group"></i> <span>Task Master</span>
+                    </li>
+                </ul>
             </div>
-            <ul class="sidebar-menu">
-                <li onclick="switchAdminTab('users')" class="active-tab">
-                    <i class="fa-solid fa-table-cells-large"></i> <span>Dashboard</span>
-                </li>
-                <li onclick="switchAdminTab('tasks')">
-                    <i class="fa-solid fa-folder"></i> <span>Tasks</span>
-                </li>
-            </ul>
             <div class="sidebar-footer" onclick="handleLogout()">
-                <i class="fa-solid fa-right-from-bracket"></i>
+                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
             </div>
         </aside>
 
@@ -86,17 +92,17 @@
             <div id="admin-users-tab">
                 <h2 class="page-title">User Management</h2>
                 <div class="filter-bar">
-                    <button class="btn-dark">Filter</button>
-                    <button class="btn-dark" onclick="exportUsersToCSV()">Export</button>
+                    <button class="btn-dark" onclick="exportUsersToCSV()"><i class="fa-solid fa-download"></i> Export CSV</button>
                 </div>
                 
                 <div class="table-card">
                     <table class="styled-table">
-                        <thead class="dark-head">
+                        <thead>
                             <tr>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Role</th>
+                                <th>Team</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -107,14 +113,14 @@
             </div>
             
             <div id="admin-tasks-tab" class="hidden-tab">
-                <h2 class="page-title">Task Management</h2>
+                <h2 class="page-title">All System Tasks</h2>
                 <div class="table-card">
                     <table class="styled-table">
-                        <thead class="dark-head">
+                        <thead>
                             <tr>
                                 <th>Task Name</th>
                                 <th>Team</th>
-                                <th>Assigned</th>
+                                <th>Assigned To</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -127,23 +133,32 @@
 
     <section id="manager-view" class="hidden-view layout-container">
         <aside class="sidebar">
-            <div class="sidebar-header"><i class="fa-solid fa-bars"></i></div>
-            <ul class="sidebar-menu">
-                <li class="active-tab"><i class="fa-solid fa-list-check"></i></li>
-            </ul>
-            <div class="sidebar-footer" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i></div>
+            <div>
+                <div class="sidebar-header"><i class="fa-solid fa-chart-pie"></i> Manager</div>
+                <ul class="sidebar-menu">
+                    <li class="active-tab"><i class="fa-solid fa-list-check"></i> <span>Overview</span></li>
+                </ul>
+            </div>
+            <div class="sidebar-footer" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></div>
         </aside>
 
         <main class="main-content">
-            <h2 class="page-title">Manager Dashboard</h2>
+            <h2 class="page-title">Team Overview</h2>
             
-            <div style="width: 300px; margin-bottom: 30px; background: white; padding: 20px; border-radius: 12px;">
-                <canvas id="statusChart"></canvas>
+            <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+                <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); flex: 1; max-width: 300px;">
+                    <h4 style="margin-top: 0; color: #64748b;">Task Distribution</h4>
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div style="background: var(--accent); color: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); flex: 1;">
+                    <h2 style="margin: 0; font-size: 2.5rem;">5</h2>
+                    <p style="margin: 0; opacity: 0.9;">Tasks Pending Review</p>
+                </div>
             </div>
 
             <div class="table-card">
                 <table class="styled-table">
-                    <thead class="dark-head">
+                    <thead>
                         <tr>
                             <th>Task Title</th>
                             <th>Assignee</th>
@@ -152,67 +167,69 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="manager-task-list">
-                        </tbody>
+                    <tbody id="manager-task-list"></tbody>
                 </table>
             </div>
         </main>
     </section>
 
-    <section id="employee-view" class="hidden-view layout-container">
-        <aside class="sidebar">
-            <div class="sidebar-header"><i class="fa-solid fa-bars"></i></div>
-            <ul class="sidebar-menu">
-                <li class="active-tab"><i class="fa-solid fa-table-cells-large"></i></li>
-                <li><i class="fa-solid fa-folder"></i></li>
+    <section id="employee-view" class="hidden-view kanban-layout">
+        <aside class="sidebar" style="width: 80px; align-items: center;">
+            <div class="sidebar-header" style="margin-bottom: 20px; justify-content: center;">
+                <i class="fa-solid fa-cube"></i>
+            </div>
+            <ul class="sidebar-menu" style="text-align: center;">
+                <li class="active-tab" title="Kanban Board"><i class="fa-solid fa-table-columns"></i></li>
+                <li title="My Files"><i class="fa-solid fa-folder"></i></li>
             </ul>
-            <div class="sidebar-footer" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i></div>
+            <div class="sidebar-footer" onclick="handleLogout()" title="Logout">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
         </aside>
 
-        <main class="main-content kanban-layout">
-            <div class="kanban-area">
-                <div class="header-flex">
-                    <h2>Task Management</h2>
+        <div class="kanban-area">
+            <h2 class="page-title">My Tasks</h2>
+            
+            <div class="kanban-board-grid">
+                <div class="kanban-col">
+                    <div class="col-title">Pending</div>
+                    <div id="col-pending" class="task-container"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="col-title">In Progress</div>
+                    <div id="col-progress" class="task-container"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="col-title">Completed</div>
+                    <div id="col-completed" class="task-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-sidebar">
+            <div class="profile-card">
+                <div class="avatar-circle">SO</div>
+                <h4 style="margin-bottom: 5px;">Sadeq Odeh</h4>
+                <small style="color: #64748b;">Software Engineer</small>
+                
+                <div class="stats-card">
+                    <span>Task Completion</span> <span style="float:right; color: var(--success);">70%</span>
+                    <div class="progress-bar"><div class="fill" style="width: 70%"></div></div>
                 </div>
                 
-                <div class="kanban-board-grid">
-                    <div class="kanban-col">
-                        <h3 class="col-title">DRAFT</h3>
-                        <div id="col-pending" class="task-container"></div>
+                <div class="schedule-list">
+                    <h4 style="font-size: 0.9rem; text-transform: uppercase; color: #94a3b8;">Today's Schedule</h4>
+                    <div class="schedule-item">
+                        <div class="time-pill">11:00 AM</div>
+                        <span style="font-size: 0.9rem;">Sprint Meeting</span>
                     </div>
-                    <div class="kanban-col">
-                        <h3 class="col-title">IN PROGRESS</h3>
-                        <div id="col-progress" class="task-container"></div>
-                    </div>
-                    <div class="kanban-col">
-                        <h3 class="col-title">DONE</h3>
-                        <div id="col-completed" class="task-container"></div>
+                     <div class="schedule-item">
+                        <div class="time-pill">02:00 PM</div>
+                        <span style="font-size: 0.9rem;">Code Review</span>
                     </div>
                 </div>
             </div>
-
-            <div class="info-sidebar">
-                <div class="profile-card">
-                    <div class="avatar-circle"><i class="fa-solid fa-user"></i></div>
-                    <h4>Employee Name</h4>
-                    <div class="stats-card">
-                        <span>Completed</span> <span style="float:right">13</span>
-                        <div class="progress-bar"><div class="fill" style="width: 70%"></div></div>
-                    </div>
-                    <div class="stats-card">
-                        <span>Efficiency</span>
-                        <div class="gauge-placeholder"><i class="fa-solid fa-gauge-high"></i> 75%</div>
-                    </div>
-                    <div class="schedule-list">
-                        <h4>Schedule <i class="fa-regular fa-calendar"></i></h4>
-                        <div class="schedule-item">
-                            <div class="time-pill">11:00 AM</div>
-                            <span>Meeting</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+        </div>
     </section>
 
     <script src="app.js"></script>
