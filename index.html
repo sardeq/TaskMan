@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <section id="login-view" class="active-view">
+        <div class="login-container">
+            <h1>Tasks</h1>
+            <p>Employee Task Management & Tracking System</p>
+            <input type="email" id="email" placeholder="Email" />
+            <input type="password" id="password" placeholder="Password" />
+            <button onclick="handleLogin()">Log In</button>
+            <p id="login-msg"></p>
+        </div>
+    </section>
+
+    <section id="admin-view" class="hidden-view layout-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <ul class="sidebar-menu">
+                <li onclick="switchAdminTab('users')" class="active-tab">
+                    <i class="fa-solid fa-users"></i> <span>Users</span>
+                </li>
+                <li onclick="switchAdminTab('tasks')">
+                    <i class="fa-solid fa-list-check"></i> <span>Tasks</span>
+                </li>
+                <li onclick="switchAdminTab('analytics')">
+                    <i class="fa-solid fa-chart-pie"></i> <span>Analytics</span>
+                </li>
+            </ul>
+            <div class="sidebar-footer" onclick="handleLogout()">
+                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            
+            <div id="admin-users-tab">
+                <div class="header-flex">
+                    <h2>User Management</h2>
+                    <div class="action-buttons">
+                        <button class="btn-secondary">Filter</button>
+                        <button class="btn-secondary" onclick="exportUsersToCSV()">Export</button> 
+                        <button class="btn-primary" onclick="openUserModal()">+ Add User</button>
+                    </div>
+                </div>
+
+                <div class="card full-width">
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Team</th> <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-user-list">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="admin-tasks-tab" class="hidden-tab">
+                <h2>System Task Overview</h2>
+                <div class="card full-width">
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Task Name</th>
+                                <th>Team</th>
+                                <th>Assigned Employee</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-task-list">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <section id="employee-view" class="hidden-view">
+        <nav>
+            <h2>My Tasks</h2>
+            <button onclick="handleLogout()">Logout</button>
+        </nav>
+        <div class="kanban-board">
+            <div class="kanban-col">
+                <h3>Pending</h3>
+                <div id="col-pending" class="task-container"></div>
+            </div>
+            <div class="kanban-col">
+                <h3>In Progress</h3>
+                <div id="col-progress" class="task-container"></div>
+            </div>
+            <div class="kanban-col">
+                <h3>Completed</h3>
+                <div id="col-completed" class="task-container"></div>
+            </div>
+        </div>
+    </section>
+
+    <script src="app.js"></script>
+</body>
+</html>

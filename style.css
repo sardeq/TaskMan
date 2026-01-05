@@ -1,0 +1,56 @@
+/* Basic reset & fonts */
+body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f4f9; color: #333; }
+
+/* View Switching */
+.hidden-view { display: none !important; }
+.active-view { display: block; }
+.hidden-tab { display: none; }
+
+/* Layout Containers */
+.layout-container { display: flex; height: 100vh; }
+.main-content { flex: 1; padding: 30px; overflow-y: auto; }
+
+/* Sidebar Styles (Based on Screenshot) */
+.sidebar {
+    width: 250px;
+    background-color: #1e293b; /* Dark Blue/Grey from screenshot */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.sidebar-header { padding: 20px; font-size: 1.5rem; text-align: center; border-bottom: 1px solid #334155; }
+.sidebar-menu { list-style: none; padding: 0; margin: 0; }
+.sidebar-menu li {
+    padding: 15px 25px; cursor: pointer; display: flex; align-items: center; gap: 15px;
+    transition: background 0.3s;
+}
+.sidebar-menu li:hover, .sidebar-menu li.active-tab { background-color: #334155; border-left: 4px solid #3b82f6; }
+.sidebar-footer { padding: 20px; cursor: pointer; background: #0f172a; display: flex; align-items: center; gap: 10px; }
+
+/* Header & Buttons */
+.header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.action-buttons { display: flex; gap: 10px; }
+
+.btn-primary { background: #1e293b; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; }
+.btn-secondary { background: white; color: #1e293b; border: 1px solid #1e293b; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+.btn-secondary:hover { background: #f1f5f9; }
+
+/* Tables  */
+.card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+.styled-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; }
+.styled-table th { text-align: left; padding: 16px; border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 600; }
+.styled-table td { padding: 16px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+
+/* Status Badges (Matches screenshot colors) */
+.badge { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+.status-active, .status-completed { background-color: #dcfce7; color: #166534; } /* Green */
+.status-inactive, .status-high { background-color: #fee2e2; color: #991b1b; } /* Red */
+.status-pending, .status-medium { background-color: #fef9c3; color: #854d0e; } /* Yellow */
+
+/* Login & Kanban (Preserved) */
+.login-container { max-width: 400px; margin: 100px auto; padding: 40px; background: white; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; }
+input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
+.kanban-board { display: flex; gap: 20px; padding: 20px; }
+.kanban-col { flex: 1; background: #e9ecef; padding: 15px; border-radius: 8px; }
+.task-card { background: white; padding: 15px; margin-bottom: 10px; border-left: 5px solid #007bff; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
