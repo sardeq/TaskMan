@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Manager - Admin</title>
+    <title>Task Management System</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,14 +11,56 @@
 </head>
 <body>
 
-    <section id="login-view" class="active-view">
-        <div class="login-container">
-            <h1>Tasks</h1>
-            <p>Employee Task Management & Tracking System</p>
-            <input type="email" id="email" placeholder="Email" />
-            <input type="password" id="password" placeholder="Password" />
-            <button onclick="handleLogin()">Log In</button>
-            <p id="login-msg"></p>
+    <section id="login-view" class="active-view auth-bg">
+        <div class="auth-card">
+            <div class="logo-area">
+                <i class="fa-solid fa-cube fa-3x"></i>
+            </div>
+            <h2>Login</h2>
+            
+            <label>Username (Email)</label>
+            <input type="email" id="email" class="auth-input" />
+            
+            <label>Password</label>
+            <input type="password" id="password" class="auth-input" />
+            
+            <div class="auth-links">
+                <a href="#">Forgot Password?</a>
+            </div>
+
+            <button onclick="handleLogin()" class="btn-block">Login</button>
+            <p id="login-msg" class="error-text"></p>
+            
+            <div class="auth-footer">
+                <span>Don't have an account?</span> 
+                <a href="#" onclick="toggleLoginMode('signup')">Sign Up</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="signup-view" class="hidden-view auth-bg">
+        <div class="auth-card">
+            <div class="logo-area">
+                <i class="fa-solid fa-cube fa-3x"></i>
+            </div>
+            <h2>Create Account</h2>
+            
+            <label>Full Name</label>
+            <input type="text" id="signup-name" class="auth-input" />
+
+            <label>Email</label>
+            <input type="email" id="signup-email" class="auth-input" />
+            
+            <label>Password</label>
+            <input type="password" id="signup-password" class="auth-input" />
+
+            <button onclick="handleSignup()" class="btn-block">Sign Up</button>
+            <p id="signup-msg" class="error-text"></p>
+            
+            <div class="auth-footer">
+                <span>Already have an account?</span> 
+                <a href="#" onclick="toggleLoginMode('login')">Log In</a>
+            </div>
         </div>
     </section>
 
@@ -29,88 +71,148 @@
             </div>
             <ul class="sidebar-menu">
                 <li onclick="switchAdminTab('users')" class="active-tab">
-                    <i class="fa-solid fa-users"></i> <span>Users</span>
+                    <i class="fa-solid fa-table-cells-large"></i> <span>Dashboard</span>
                 </li>
                 <li onclick="switchAdminTab('tasks')">
-                    <i class="fa-solid fa-list-check"></i> <span>Tasks</span>
-                </li>
-                <li onclick="switchAdminTab('analytics')">
-                    <i class="fa-solid fa-chart-pie"></i> <span>Analytics</span>
+                    <i class="fa-solid fa-folder"></i> <span>Tasks</span>
                 </li>
             </ul>
             <div class="sidebar-footer" onclick="handleLogout()">
-                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+                <i class="fa-solid fa-right-from-bracket"></i>
             </div>
         </aside>
 
         <main class="main-content">
-            
             <div id="admin-users-tab">
-                <div class="header-flex">
-                    <h2>User Management</h2>
-                    <div class="action-buttons">
-                        <button class="btn-secondary">Filter</button>
-                        <button class="btn-secondary" onclick="exportUsersToCSV()">Export</button> 
-                        <button class="btn-primary" onclick="openUserModal()">+ Add User</button>
-                    </div>
+                <h2 class="page-title">User Management</h2>
+                <div class="filter-bar">
+                    <button class="btn-dark">Filter</button>
+                    <button class="btn-dark" onclick="exportUsersToCSV()">Export</button>
                 </div>
-
-                <div class="card full-width">
+                
+                <div class="table-card">
                     <table class="styled-table">
-                        <thead>
+                        <thead class="dark-head">
                             <tr>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Role</th>
-                                <th>Team</th> <th>Status</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-user-list">
-                            </tbody>
+                        <tbody id="admin-user-list"></tbody>
                     </table>
                 </div>
             </div>
-
+            
             <div id="admin-tasks-tab" class="hidden-tab">
-                <h2>System Task Overview</h2>
-                <div class="card full-width">
+                <h2 class="page-title">Task Management</h2>
+                <div class="table-card">
                     <table class="styled-table">
-                        <thead>
+                        <thead class="dark-head">
                             <tr>
                                 <th>Task Name</th>
                                 <th>Team</th>
-                                <th>Assigned Employee</th>
+                                <th>Assigned</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-task-list">
-                            </tbody>
+                        <tbody id="admin-task-list"></tbody>
                     </table>
                 </div>
             </div>
         </main>
     </section>
 
-    <section id="employee-view" class="hidden-view">
-        <nav>
-            <h2>My Tasks</h2>
-            <button onclick="handleLogout()">Logout</button>
-        </nav>
-        <div class="kanban-board">
-            <div class="kanban-col">
-                <h3>Pending</h3>
-                <div id="col-pending" class="task-container"></div>
+    <section id="manager-view" class="hidden-view layout-container">
+        <aside class="sidebar">
+            <div class="sidebar-header"><i class="fa-solid fa-bars"></i></div>
+            <ul class="sidebar-menu">
+                <li class="active-tab"><i class="fa-solid fa-list-check"></i></li>
+            </ul>
+            <div class="sidebar-footer" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i></div>
+        </aside>
+
+        <main class="main-content">
+            <h2 class="page-title">Manager Dashboard</h2>
+            
+            <div style="width: 300px; margin-bottom: 30px; background: white; padding: 20px; border-radius: 12px;">
+                <canvas id="statusChart"></canvas>
             </div>
-            <div class="kanban-col">
-                <h3>In Progress</h3>
-                <div id="col-progress" class="task-container"></div>
+
+            <div class="table-card">
+                <table class="styled-table">
+                    <thead class="dark-head">
+                        <tr>
+                            <th>Task Title</th>
+                            <th>Assignee</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="manager-task-list">
+                        </tbody>
+                </table>
             </div>
-            <div class="kanban-col">
-                <h3>Completed</h3>
-                <div id="col-completed" class="task-container"></div>
+        </main>
+    </section>
+
+    <section id="employee-view" class="hidden-view layout-container">
+        <aside class="sidebar">
+            <div class="sidebar-header"><i class="fa-solid fa-bars"></i></div>
+            <ul class="sidebar-menu">
+                <li class="active-tab"><i class="fa-solid fa-table-cells-large"></i></li>
+                <li><i class="fa-solid fa-folder"></i></li>
+            </ul>
+            <div class="sidebar-footer" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i></div>
+        </aside>
+
+        <main class="main-content kanban-layout">
+            <div class="kanban-area">
+                <div class="header-flex">
+                    <h2>Task Management</h2>
+                </div>
+                
+                <div class="kanban-board-grid">
+                    <div class="kanban-col">
+                        <h3 class="col-title">DRAFT</h3>
+                        <div id="col-pending" class="task-container"></div>
+                    </div>
+                    <div class="kanban-col">
+                        <h3 class="col-title">IN PROGRESS</h3>
+                        <div id="col-progress" class="task-container"></div>
+                    </div>
+                    <div class="kanban-col">
+                        <h3 class="col-title">DONE</h3>
+                        <div id="col-completed" class="task-container"></div>
+                    </div>
+                </div>
             </div>
-        </div>
+
+            <div class="info-sidebar">
+                <div class="profile-card">
+                    <div class="avatar-circle"><i class="fa-solid fa-user"></i></div>
+                    <h4>Employee Name</h4>
+                    <div class="stats-card">
+                        <span>Completed</span> <span style="float:right">13</span>
+                        <div class="progress-bar"><div class="fill" style="width: 70%"></div></div>
+                    </div>
+                    <div class="stats-card">
+                        <span>Efficiency</span>
+                        <div class="gauge-placeholder"><i class="fa-solid fa-gauge-high"></i> 75%</div>
+                    </div>
+                    <div class="schedule-list">
+                        <h4>Schedule <i class="fa-regular fa-calendar"></i></h4>
+                        <div class="schedule-item">
+                            <div class="time-pill">11:00 AM</div>
+                            <span>Meeting</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </section>
 
     <script src="app.js"></script>

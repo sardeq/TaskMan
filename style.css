@@ -1,56 +1,97 @@
-/* Basic reset & fonts */
-body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f4f9; color: #333; }
-
-/* View Switching */
+/* GLOBAL RESETS */
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #f4f6f8; color: #333; }
 .hidden-view { display: none !important; }
-.active-view { display: block; }
+.active-view { display: flex; width: 100%; height: 100vh; }
 .hidden-tab { display: none; }
 
-/* Layout Containers */
-.layout-container { display: flex; height: 100vh; }
-.main-content { flex: 1; padding: 30px; overflow-y: auto; }
+/* --- AUTH STYLING (Matches Screenshot 170036) --- */
+.auth-bg { background-color: #ffffff; justify-content: center; align-items: center; display: flex; height: 100vh; }
+.auth-card { 
+    width: 380px; text-align: center; padding: 40px; 
+}
+.logo-area { color: #1e293b; margin-bottom: 20px; }
+.auth-card h2 { color: #1e293b; font-weight: 700; margin-bottom: 30px; }
 
-/* Sidebar Styles (Based on Screenshot) */
+label { display: block; text-align: left; font-weight: 600; color: #1e293b; margin-top: 15px; margin-bottom: 5px; }
+.auth-input {
+    width: 100%; padding: 12px; border: 1px solid #1e293b; border-radius: 8px; box-sizing: border-box; outline: none;
+}
+.auth-input:focus { border: 2px solid #1e293b; }
+
+.auth-links { text-align: right; margin-top: 10px; font-size: 0.9rem; }
+.auth-links a { color: #555; text-decoration: none; }
+
+.btn-block {
+    width: 100%; background-color: #1e293b; color: white; padding: 12px; border: none; 
+    border-radius: 8px; font-size: 1rem; margin-top: 25px; cursor: pointer; font-weight: bold;
+}
+.btn-block:hover { background-color: #2c3e50; }
+
+.auth-footer { margin-top: 30px; font-size: 0.9rem; }
+.auth-footer a { color: #1e293b; font-weight: bold; text-decoration: none; }
+
+/* --- LAYOUT & SIDEBAR (Matches Screenshot 172621) --- */
+.layout-container { display: flex; flex-direction: row; height: 100vh; width: 100%; }
+
 .sidebar {
-    width: 250px;
-    background-color: #1e293b; /* Dark Blue/Grey from screenshot */
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    width: 80px; /* Slim sidebar from screenshots */
+    background-color: #1e293b; 
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: 20px 0;
 }
-.sidebar-header { padding: 20px; font-size: 1.5rem; text-align: center; border-bottom: 1px solid #334155; }
-.sidebar-menu { list-style: none; padding: 0; margin: 0; }
+.sidebar-header, .sidebar-footer { color: white; font-size: 1.5rem; cursor: pointer; margin-bottom: 20px;}
+.sidebar-menu { list-style: none; padding: 0; width: 100%; }
 .sidebar-menu li {
-    padding: 15px 25px; cursor: pointer; display: flex; align-items: center; gap: 15px;
-    transition: background 0.3s;
+    padding: 20px 0; color: #94a3b8; text-align: center; cursor: pointer; transition: 0.3s; font-size: 1.5rem;
 }
-.sidebar-menu li:hover, .sidebar-menu li.active-tab { background-color: #334155; border-left: 4px solid #3b82f6; }
-.sidebar-footer { padding: 20px; cursor: pointer; background: #0f172a; display: flex; align-items: center; gap: 10px; }
+.sidebar-menu li:hover, .sidebar-menu li.active-tab { color: white; border-left: 4px solid white; background: rgba(255,255,255,0.1); }
 
-/* Header & Buttons */
-.header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.action-buttons { display: flex; gap: 10px; }
+.main-content { flex: 1; padding: 30px; overflow-y: auto; background-color: #f4f6f8; }
 
-.btn-primary { background: #1e293b; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; }
-.btn-secondary { background: white; color: #1e293b; border: 1px solid #1e293b; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
-.btn-secondary:hover { background: #f1f5f9; }
+/* --- TABLE STYLING (Matches Screenshot 172621 & 172632) --- */
+.page-title { color: #1e293b; font-size: 1.8rem; margin-bottom: 10px; }
+.filter-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+.btn-dark { background: #1e293b; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-/* Tables  */
-.card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-.styled-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; }
-.styled-table th { text-align: left; padding: 16px; border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 600; }
-.styled-table td { padding: 16px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+.table-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.styled-table { width: 100%; border-collapse: collapse; }
+.dark-head th { background-color: #1e293b; color: white; padding: 18px; text-align: left; font-weight: 500; }
+.styled-table td { padding: 15px 18px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; color: #333; }
 
-/* Status Badges (Matches screenshot colors) */
-.badge { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
-.status-active, .status-completed { background-color: #dcfce7; color: #166534; } /* Green */
-.status-inactive, .status-high { background-color: #fee2e2; color: #991b1b; } /* Red */
-.status-pending, .status-medium { background-color: #fef9c3; color: #854d0e; } /* Yellow */
+/* Status Pills */
+.status-active, .status-completed { background-color: #198754; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; }
+.status-inactive { background-color: #dc3545; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; }
+.status-pending, .status-medium { background-color: #ffc107; color: #000; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; }
 
-/* Login & Kanban (Preserved) */
-.login-container { max-width: 400px; margin: 100px auto; padding: 40px; background: white; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; }
-input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
-.kanban-board { display: flex; gap: 20px; padding: 20px; }
-.kanban-col { flex: 1; background: #e9ecef; padding: 15px; border-radius: 8px; }
-.task-card { background: white; padding: 15px; margin-bottom: 10px; border-left: 5px solid #007bff; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+/* --- KANBAN & EMPLOYEE DASHBOARD (Matches Screenshot 170059) --- */
+.kanban-layout { display: flex; gap: 20px; padding: 0; background: #eef2f6; }
+.kanban-area { flex: 3; padding: 30px; }
+.kanban-board-grid { display: flex; gap: 20px; margin-top: 20px; }
+.kanban-col { flex: 1; }
+.col-title { text-transform: uppercase; font-size: 0.9rem; color: #555; margin-bottom: 15px; letter-spacing: 1px; text-align: center; }
+
+/* Kanban Cards */
+.task-card { 
+    background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 2px solid transparent; 
+    transition: transform 0.2s;
+}
+.task-card:hover { transform: translateY(-3px); border-color: #d97706; }
+.task-card h4 { margin: 0 0 10px 0; color: #1e293b; text-transform: uppercase; font-size: 0.9rem; }
+.btn-details { background: #1e293b; color: white; width: 100%; padding: 8px; border-radius: 20px; border: none; margin-bottom: 8px; cursor: pointer; }
+.btn-assign { background: #d97706; color: white; width: 100%; padding: 8px; border-radius: 20px; border: none; cursor: pointer; }
+
+/* Right Info Sidebar */
+.info-sidebar { 
+    flex: 1; background: #1e293b; color: white; padding: 30px; 
+    border-top-left-radius: 30px; border-bottom-left-radius: 30px;
+    display: flex; flex-direction: column; align-items: center;
+}
+.profile-card { width: 100%; text-align: center; }
+.avatar-circle { width: 80px; height: 80px; background: #475569; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+.stats-card { background: white; color: #333; padding: 15px; border-radius: 15px; margin-top: 20px; text-align: left; }
+.progress-bar { height: 8px; background: #e2e8f0; border-radius: 4px; margin-top: 10px; overflow: hidden; }
+.fill { height: 100%; background: #1e293b; }
+.schedule-list { margin-top: 40px; text-align: left; width: 100%; }
+.schedule-item { display: flex; align-items: center; gap: 15px; margin-top: 15px; border-left: 3px solid #94a3b8; padding-left: 15px; }
+.time-pill { font-size: 0.8rem; opacity: 0.8; }

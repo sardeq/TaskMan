@@ -5,10 +5,70 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 // DOM Elements
 const views = {
     login: document.getElementById('login-view'),
+    signup: document.getElementById('signup-view'),
     manager: document.getElementById('manager-view'),
     admin: document.getElementById('admin-view'),
     employee: document.getElementById('employee-view')
 };
+
+async function handleSignup() {
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
+    const fullName = document.getElementById('signup-name').value;
+    const msg = document.getElementById('signup-msg');
+
+    if(!email || !password || !fullName) {
+        msg.innerText = "Please fill in all fields.";
+        return;
+    }
+
+    // 1. Create Auth User
+    const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password,
+        options: { data: { full_name: fullName } }
+    });
+
+    if (authError) {
+        msg.innerText = "Error: " + authError.message;
+        return;
+    }
+
+    // 2. Insert into public.users
+    // We use upsert here just in case the row partially exists or to handle retries safely
+    const { error: dbError } = await supabaseClient
+        .from('users')
+        .upsert([{ 
+            id: authData.user.id, 
+            email: email, 
+            full_name: fullName,
+            role: 'Employee',
+            status: 'Pending' // This requires the SQL fix from Step 1
+        }]);
+
+    if(dbError) {
+        console.error("DB Insert Error", dbError);
+        msg.innerText = "Account created, but profile setup failed: " + dbError.message;
+    } else {
+        msg.style.color = "green";
+        msg.innerText = "Success! Please log in.";
+        setTimeout(() => toggleLoginMode('login'), 2000);
+    }
+}
+
+function toggleLoginMode(mode) {
+    if(mode === 'signup') {
+        document.getElementById('login-view').classList.add('hidden-view');
+        document.getElementById('login-view').classList.remove('active-view');
+        document.getElementById('signup-view').classList.remove('hidden-view');
+        document.getElementById('signup-view').classList.add('active-view');
+    } else {
+        document.getElementById('signup-view').classList.add('hidden-view');
+        document.getElementById('signup-view').classList.remove('active-view');
+        document.getElementById('login-view').classList.remove('hidden-view');
+        document.getElementById('login-view').classList.add('active-view');
+    }
+}
 
 async function handleLogin() {
     const email = document.getElementById('email').value;
@@ -47,10 +107,22 @@ async function checkUserRole(userId) {
 }
 
 function switchView(viewName) {
-    Object.values(views).forEach(el => el.classList.remove('active-view'));
-    Object.values(views).forEach(el => el.classList.add('hidden-view'));
-    views[viewName].classList.remove('hidden-view');
-    views[viewName].classList.add('active-view');
+    // 1. Hide all views (safely)
+    Object.values(views).forEach(el => {
+        if (el) { // Only proceed if the element actually exists
+            el.classList.remove('active-view');
+            el.classList.add('hidden-view');
+        }
+    });
+
+    // 2. Show the specific view
+    const target = views[viewName];
+    if (target) {
+        target.classList.remove('hidden-view');
+        target.classList.add('active-view');
+    } else {
+        console.error(`Error: Element for view '${viewName}' not found in DOM.`);
+    }
 }
 
 
@@ -61,9 +133,17 @@ async function loadAdminDashboard() {
 }
 
 async function fetchUsers() {
+    // FIX: We explicitly specify the foreign key constraint to disambiguate the relationship.
+    // We want the team the user BELONGS to (users.team_id), not the one they manage.
     const { data: users, error } = await supabaseClient
         .from('users')
-        .select(`id, full_name, email, role, teams(name)`); // Joining teams table [cite: 269]
+        .select(`
+            id, 
+            full_name, 
+            email, 
+            role, 
+            teams!users_team_id_fkey(name)
+        `); 
 
     if (error) {
         console.error('Error fetching users:', error);
@@ -74,16 +154,19 @@ async function fetchUsers() {
     tbody.innerHTML = '';
 
     users.forEach(user => {
-        // Mock status logic (Active/Inactive) based on role or data
-        const status = user.role === 'Admin' ? 'Active' : 'Active'; 
-        const statusClass = status === 'Active' ? 'status-active' : 'status-inactive';
+        // Handle case where user has no team (null)
+        const teamName = user.teams ? user.teams.name : 'Unassigned';
+        
+        // Status logic
+        const status = 'Active'; 
+        const statusClass = 'status-active';
         
         const row = `
             <tr>
                 <td><strong>${user.full_name}</strong></td>
                 <td>${user.email}</td>
                 <td>${user.role}</td>
-                <td>${user.teams ? user.teams.name : 'Unassigned'}</td>
+                <td>${teamName}</td>
                 <td><span class="badge ${statusClass}">${status}</span></td>
                 <td>
                     <button class="btn-secondary" style="padding: 5px 10px;">Edit</button>
@@ -95,32 +178,46 @@ async function fetchUsers() {
     });
 }
 
-// Fetch and Render Tasks for Admin 
 async function fetchAdminTasks() {
-    const { data: tasks } = await supabaseClient
+    // FIX: Correctly nest the Many-to-Many query
+    // Tasks -> Task_Assignments -> Users
+    const { data: tasks, error } = await supabaseClient
         .from('tasks')
         .select(`
+            id,
             title, 
             task_statuses(name), 
             teams(name), 
-            users!task_assignments(full_name) 
+            task_assignments(
+                users(full_name)
+            )
         `); 
-        // Note: This query assumes relationships are set up in Supabase as per ERD
+
+    if (error) {
+        console.error("Error fetching tasks:", error);
+        return;
+    }
 
     const tbody = document.getElementById('admin-task-list');
     tbody.innerHTML = '';
 
     if(tasks) {
         tasks.forEach(task => {
-            const statusClass = getStatusClass(task.task_statuses.name);
-            const employeeName = task.users ? task.users.full_name : 'Unassigned';
+            const statusClass = getStatusClass(task.task_statuses?.name);
+            const teamName = task.teams ? task.teams.name : 'General';
+            
+            // Handle multiple assignees (since it's an array now)
+            // We map through the assignments to get all user names
+            const assignees = task.task_assignments.length > 0 
+                ? task.task_assignments.map(a => a.users.full_name).join(", ") 
+                : 'Unassigned';
             
             tbody.innerHTML += `
                 <tr>
                     <td>${task.title}</td>
-                    <td>${task.teams ? task.teams.name : 'General'}</td>
-                    <td>${employeeName}</td>
-                    <td><span class="badge ${statusClass}">${task.task_statuses.name}</span></td>
+                    <td>${teamName}</td>
+                    <td>${assignees}</td>
+                    <td><span class="badge ${statusClass}">${task.task_statuses?.name}</span></td>
                 </tr>
             `;
         });
