@@ -99,7 +99,7 @@ async function checkUserRole(userId) {
         if (userProfile.role === 'Admin') {
             loadAdminDashboard();
         } else if (userProfile.role === 'Manager') {
-            loadAdminDashboard();
+            loadManagerDashboard();
         } else {
             loadEmployeeDashboard(userId);
         }
@@ -468,33 +468,12 @@ async function deleteTeam(id) {
     else fetchTeams();
 }
 
-// 3. Manager Dashboard Logic
+let managerTasksCache = []; 
+
 async function loadManagerDashboard() {
     switchView('manager');
-    
-    // Fetch all tasks [cite: 154]
-    const { data: tasks } = await supabaseClient
-        .from('tasks')
-        .select(`*, task_statuses(name), task_priorities(name)`);
-
-    const list = document.getElementById('manager-task-list');
-    list.innerHTML = '';
-
-    // Render Table
-    tasks.forEach(task => {
-        const row = `
-            <tr>
-                <td>${task.title}</td>
-                <td>--</td> <td>${task.task_priorities.name}</td>
-                <td>${task.task_statuses.name}</td>
-                <td><button onclick="deleteTask('${task.id}')">Delete</button></td>
-            </tr>
-        `;
-        list.innerHTML += row;
-    });
-
-    // Render Analytics Chart [cite: 172]
-    renderChart(tasks);
+    // Default to Analytics tab
+    switchManagerTab('analytics');
 }
 
 function renderChart(tasks) {
@@ -517,6 +496,200 @@ function renderChart(tasks) {
             }]
         }
     });
+}
+
+function switchManagerTab(tabName) {
+    // Hide all tabs
+    ['analytics', 'team-tasks', 'my-tasks'].forEach(t => {
+        document.getElementById(`manager-${t}-tab`).classList.add('hidden-tab');
+        document.getElementById(`tab-${t}`).classList.remove('active-tab');
+    });
+
+    // Show selected
+    document.getElementById(`manager-${tabName}-tab`).classList.remove('hidden-tab');
+    document.getElementById(`tab-${tabName}`).classList.add('active-tab');
+
+    // Load Data
+    if (tabName === 'analytics') loadManagerAnalytics();
+    if (tabName === 'team-tasks') loadManagerTeamTasks();
+    if (tabName === 'my-tasks') loadManagerPersonalTasks();
+}
+
+// 1. ANALYTICS TAB
+async function loadManagerAnalytics() {
+    [cite_start]// Fetch all tasks [cite: 154]
+    const { data: tasks, error } = await supabaseClient
+        .from('tasks')
+        .select(`*, task_statuses(name)`);
+
+    if (error) { console.error(error); return; }
+
+    // Metrics Calculation
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.task_statuses.name === 'Completed').length;
+    const pending = tasks.filter(t => t.task_statuses.name === 'Pending').length;
+    const progress = tasks.filter(t => t.task_statuses.name === 'In Progress').length;
+    
+    // Update Stat Cards [Matches Image 1]
+    document.getElementById('manager-stat-completed').innerText = completed;
+    document.getElementById('manager-stat-pending').innerText = pending;
+    
+    // Update Efficiency Gauge
+    const efficiency = total === 0 ? 0 : Math.round((completed / total) * 100);
+    document.getElementById('manager-efficiency-text').innerText = `${efficiency}%`;
+    const gradientStop = (efficiency / 100) * 100; 
+    document.getElementById('manager-efficiency-gauge').style.background = 
+        `conic-gradient(var(--accent) 0% ${gradientStop}%, transparent ${gradientStop}% 100%)`;
+
+    // Render Charts
+    renderManagerCharts(completed, pending, progress, tasks);
+}
+
+function renderManagerCharts(completed, pending, progress, tasks) {
+    // Pie Chart: Task Distribution
+    const ctxPie = document.getElementById('managerPieChart').getContext('2d');
+    
+    // Destroy existing chart if any to prevent overlay
+    if (window.mgrPie) window.mgrPie.destroy();
+
+    window.mgrPie = new Chart(ctxPie, {
+        type: 'pie',
+        data: {
+            labels: ['Completed', 'Pending', 'In Progress'],
+            datasets: [{
+                data: [completed, pending, progress],
+                backgroundColor: ['#10b981', '#f59e0b', '#3b82f6']
+            }]
+        }
+    });
+
+    // Bar Chart: Weekly Activity (Mocked data based on created_at for demo)
+    const ctxBar = document.getElementById('managerBarChart').getContext('2d');
+    if (window.mgrBar) window.mgrBar.destroy();
+
+    window.mgrBar = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+            datasets: [{
+                label: 'Tasks Created',
+                data: [4, 6, 2, 8, 5], // You can replace this with real aggregation logic later
+                backgroundColor: '#1e293b'
+            }]
+        },
+        options: { scales: { y: { beginAtZero: true } } }
+    });
+}
+
+// 2. TEAM TASKS TAB
+async function loadManagerTeamTasks() {
+    [cite_start]// Fetch tasks with assignees and team info [cite: 154]
+    const { data: tasks } = await supabaseClient
+        .from('tasks')
+        .select(`
+            *, 
+            task_statuses(name),
+            task_assignments(users(full_name)),
+            creator:users!tasks_creator_id_fkey(teams(name, id))
+        `);
+
+    managerTasksCache = tasks || [];
+    renderTeamTasksList(managerTasksCache);
+    loadTeamFilter();
+}
+
+function renderTeamTasksList(tasks) {
+    const container = document.getElementById('manager-task-rows');
+    container.innerHTML = '';
+
+    tasks.forEach(task => {
+        const status = task.task_statuses.name;
+        const assignees = task.task_assignments.map(a => a.users.full_name).join(', ') || 'Unassigned';
+        const teamName = task.creator?.teams?.name || 'General';
+        const date = new Date(task.deadline).toLocaleDateString();
+
+        // Calculate Progress Bar Width
+        let progressPercent = 0;
+        let color = '#e2e8f0';
+        if(status === 'Pending') { progressPercent = 5; color = '#f59e0b'; }
+        if(status === 'In Progress') { progressPercent = 50; color = '#3b82f6'; }
+        if(status === 'Completed') { progressPercent = 100; color = '#10b981'; }
+
+        // Render Row [Matches Image 2 Style]
+        container.innerHTML += `
+            <div class="task-row-card" style="border-left-color: ${color}">
+                <div class="task-row-info">
+                    <h4 style="margin:0;">${task.title} - ${status} - ${progressPercent}%</h4>
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width: ${progressPercent}%; background: ${color}"></div>
+                    </div>
+                </div>
+                <div class="task-row-meta">
+                    <div><i class="fa-solid fa-user"></i> ${assignees}</div>
+                    <div><i class="fa-solid fa-calendar"></i> ${date}</div>
+                    <div style="margin-top:5px; font-weight:bold; color:var(--accent)">${teamName}</div>
+                </div>
+                <div style="margin-left: 20px;">
+                     <button class="btn-secondary btn-sm" onclick="openTaskDetails('${task.id}')">Details</button>
+                     <button class="btn-danger btn-sm" onclick="deleteTask('${task.id}')"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+// Filter Logic for Right Sidebar
+async function loadTeamFilter() {
+    const { data: teams } = await supabaseClient.from('teams').select('id, name');
+    const list = document.getElementById('manager-team-filter-list');
+    list.innerHTML = `<li onclick="renderTeamTasksList(managerTasksCache)">All Teams</li>`;
+    
+    if(teams) {
+        teams.forEach(t => {
+            list.innerHTML += `<li onclick="filterTasksByTeam('${t.id}')">${t.name}</li>`;
+        });
+    }
+}
+
+function filterTasksByTeam(teamId) {
+    const filtered = managerTasksCache.filter(t => t.creator?.teams?.id === teamId);
+    renderTeamTasksList(filtered);
+}
+
+// 3. MY TASKS TAB (Personal work)
+async function loadManagerPersonalTasks() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    
+    // Reuse the logic from Employee Dashboard, but map to manager specific columns
+    const { data: assignments } = await supabaseClient
+        .from('task_assignments')
+        .select(`task:tasks (*, task_priorities(name), task_statuses(name))`)
+        .eq('employee_id', user.id);
+
+    const tasks = assignments.map(a => a.task);
+
+    // Clear columns
+    ['pending', 'progress', 'completed'].forEach(c => 
+        document.getElementById(`mgr-col-${c}`).innerHTML = ''
+    );
+
+    tasks.forEach(task => {
+        const status = task.task_statuses.name;
+        let colId = '';
+        if(status === 'Pending') colId = 'mgr-col-pending';
+        else if(status === 'In Progress') colId = 'mgr-col-progress';
+        else colId = 'mgr-col-completed';
+
+        document.getElementById(colId).innerHTML += renderTaskCard(task); // Reusing renderTaskCard from existing app.js
+    });
+}
+
+// Helper to delete task (Manager privilege)
+async function deleteTask(taskId) {
+    if(!confirm("Are you sure? This will remove the task for everyone.")) return;
+    const { error } = await supabaseClient.from('tasks').delete().eq('id', taskId);
+    if(error) alert(error.message);
+    else loadManagerTeamTasks(); // Refresh list
 }
 
 let currentOpenTaskId = null; // Track which task is open in modal
