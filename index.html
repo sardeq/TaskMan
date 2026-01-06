@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
@@ -371,54 +371,7 @@
     </div>
 </section>
 
-<div id="modal-task-details" class="modal-overlay hidden-view">
-    <div class="modal-card wide-modal">
-        <div class="modal-header no-border">
-            <h3 id="modal-task-title" style="font-size:1.2rem; font-weight:700">TASK-###</h3>
-            <i class="fa-solid fa-times close-btn" onclick="closeModal('task-details')"></i>
-        </div>
-        
-        <div class="modal-body-grid">
-            <div class="task-info-panel">
-                <label><i class="fa-solid fa-align-left"></i> Description</label>
-                <p id="modal-task-desc">Loading...</p>
-                
-                <div style="display:flex; gap:20px;">
-                    <div>
-                        <label>Assigned To</label>
-                        <p id="modal-task-assignee">--</p>
-                    </div>
-                    <div>
-                        <label>Due Date</label>
-                        <p id="modal-task-deadline">--</p>
-                    </div>
-                </div>
 
-                <hr style="border:0; border-top:1px solid #eee; margin: 20px 0;">
-                
-                <label><i class="fa-solid fa-comments"></i> Discussion</label>
-                <div id="modal-comments-list" class="comments-scroll"></div>
-                <div class="comment-input-area">
-                    <input type="text" id="new-comment-text" placeholder="Type a comment..." />
-                    <button onclick="submitComment()" class="btn-dark"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </div>
-
-            <div class="task-actions-panel">
-                <label>Status & Priority</label>
-                <div id="modal-priority-flag" class="priority-flag">
-                    Loading...
-                </div>
-
-                <div style="margin-top: auto;">
-                    <label style="margin-bottom:10px">Actions</label>
-                    <div id="modal-action-buttons">
-                        </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div id="modal-task-details" class="modal-overlay hidden-view">
     <div class="modal-card wide-modal">
@@ -539,6 +492,6 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
