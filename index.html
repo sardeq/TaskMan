@@ -250,64 +250,115 @@
         </main>
     </section>
 
-    <section id="employee-view" class="hidden-view kanban-layout">
-        <aside class="sidebar" style="width: 80px; align-items: center;">
-            <div class="sidebar-header" style="margin-bottom: 20px; justify-content: center;">
-                <i class="fa-solid fa-cube"></i>
-            </div>
-            <ul class="sidebar-menu" style="text-align: center;">
-                <li class="active-tab" title="Kanban Board"><i class="fa-solid fa-table-columns"></i></li>
-                <li title="My Files"><i class="fa-solid fa-folder"></i></li>
-            </ul>
-            <div class="sidebar-footer" onclick="handleLogout()" title="Logout">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </div>
-        </aside>
+<section id="employee-view" class="hidden-view kanban-layout">
+    <aside class="sidebar icon-only-sidebar">
+        <div class="sidebar-header">
+            <i class="fa-solid fa-cube fa-2x"></i>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="active-tab" title="Kanban Board"><i class="fa-solid fa-table-columns fa-lg"></i></li>
+            <li title="My Files"><i class="fa-solid fa-folder fa-lg"></i></li>
+            <li title="Team"><i class="fa-solid fa-users fa-lg"></i></li>
+        </ul>
+        <div class="sidebar-footer" onclick="handleLogout()" title="Logout">
+            <i class="fa-solid fa-right-from-bracket fa-lg"></i>
+        </div>
+    </aside>
 
-        <div class="kanban-area">
-            <h2 class="page-title">My Tasks</h2>
-            
-            <div class="kanban-board-grid">
-                <div class="kanban-col">
-                    <div class="col-title">Pending</div>
-                    <div id="col-pending" class="task-container"></div>
-                </div>
-                <div class="kanban-col">
-                    <div class="col-title">In Progress</div>
-                    <div id="col-progress" class="task-container"></div>
-                </div>
-                <div class="kanban-col">
-                    <div class="col-title">Completed</div>
-                    <div id="col-completed" class="task-container"></div>
-                </div>
+    <div class="kanban-area">
+        <div class="employee-header">
+            <p class="breadcrumbs">Tasks > Today</p>
+            <h2 class="page-title">Task Management</h2>
+        </div>
+        
+        <div class="kanban-board-grid">
+            <div class="kanban-col">
+                <div class="col-header">DRAFT</div>
+                <div id="col-pending" class="task-container"></div>
+            </div>
+            <div class="kanban-col">
+                <div class="col-header">IN PROGRESS</div>
+                <div id="col-progress" class="task-container"></div>
+            </div>
+            <div class="kanban-col">
+                <div class="col-header">DONE</div>
+                <div id="col-completed" class="task-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-sidebar">
+        <div class="employee-profile-header">
+            <div class="avatar-circle" id="emp-initials">SO</div>
+            <h4 id="emp-name">Loading...</h4>
+            <div class="stats-badge" id="emp-total-count">Completed: 0</div>
+        </div>
+
+        <div class="efficiency-card">
+            <h4>Efficiency</h4>
+            <div class="gauge-wrapper">
+                <div class="gauge-bg"></div>
+                <div class="gauge-fill" id="efficiency-gauge"></div>
+                <div class="gauge-cover"><span id="efficiency-text">0%</span></div>
             </div>
         </div>
 
-        <div class="info-sidebar">
-            <div class="profile-card">
-                <div class="avatar-circle">SO</div>
-                <h4 style="margin-bottom: 5px;">Sadeq Odeh</h4>
-                <small style="color: #64748b;">Software Engineer</small>
-                
-                <div class="stats-card">
-                    <span>Task Completion</span> <span style="float:right; color: var(--success);">70%</span>
-                    <div class="progress-bar"><div class="fill" style="width: 70%"></div></div>
+        <div class="schedule-section">
+            <div class="schedule-header">
+                <h4>Schedule</h4>
+                <i class="fa-solid fa-calendar"></i>
+            </div>
+            <div id="schedule-list" class="schedule-list-container">
                 </div>
-                
-                <div class="schedule-list">
-                    <h4 style="font-size: 0.9rem; text-transform: uppercase; color: #94a3b8;">Today's Schedule</h4>
-                    <div class="schedule-item">
-                        <div class="time-pill">11:00 AM</div>
-                        <span style="font-size: 0.9rem;">Sprint Meeting</span>
+        </div>
+    </div>
+</section>
+
+<div id="modal-task-details" class="modal-overlay hidden-view">
+    <div class="modal-card wide-modal">
+        <div class="modal-header no-border">
+            <h3 id="modal-task-title" style="text-transform: uppercase;">TASK-###: TITLE</h3>
+            <i class="fa-solid fa-times close-btn" onclick="closeModal('task-details')"></i>
+        </div>
+        
+        <div class="modal-body-grid">
+            <div class="task-info-panel">
+                <div class="panel-header">Task Info</div>
+                <div class="panel-content">
+                    <label>Description:</label>
+                    <p id="modal-task-desc">Analyze the project requirements...</p>
+                    
+                    <label>Assigned To:</label>
+                    <p id="modal-task-assignee">John Doe</p>
+                    
+                    <label>Due Date:</label>
+                    <p id="modal-task-deadline">Oct 26, 2026</p>
+
+                    <hr>
+                    <label>Comments:</label>
+                    <div id="modal-comments-list" class="comments-scroll"></div>
+                    <div class="comment-input-area">
+                        <input type="text" id="new-comment-text" placeholder="Add a note..." />
+                        <button onclick="submitComment()" class="btn-sm btn-dark"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
-                     <div class="schedule-item">
-                        <div class="time-pill">02:00 PM</div>
-                        <span style="font-size: 0.9rem;">Code Review</span>
+                </div>
+            </div>
+
+            <div class="task-actions-panel">
+                <div class="panel-header">Actions</div>
+                <div class="panel-content center-content">
+                    <div id="modal-priority-flag" class="priority-flag">
+                        <i class="fa-solid fa-flag"></i> High Priority
+                    </div>
+
+                    <div id="modal-action-buttons">
+                        <button class="btn-block btn-primary">Start Task</button>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</div>
 
 
     <div id="modal-add-user" class="modal-overlay hidden-view">
