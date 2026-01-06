@@ -180,22 +180,12 @@ async function fetchAdminTasks() {
     const { data: tasks, error } = await supabaseClient
         .from('tasks')
         .select(`
-            id,
-            title, 
-            task_statuses(name), 
-            creator:users!tasks_creator_id_fkey (
-                full_name,
-                teams!users_team_id_fkey (name)
-            ),
-            task_assignments (
-                users (full_name)
-            )
+            id, title, task_statuses(name), 
+            creator:users!tasks_creator_id_fkey(teams(name)),
+            task_assignments(users(full_name))
         `); 
 
-    if (error) {
-        console.error("Error fetching tasks:", error);
-        return;
-    }
+    if (error) return;
 
     const tbody = document.getElementById('admin-task-list');
     tbody.innerHTML = '';
@@ -204,14 +194,9 @@ async function fetchAdminTasks() {
         tasks.forEach(task => {
             const statusName = task.task_statuses?.name || 'Unknown';
             const statusClass = getStatusClass(statusName);
-            
-            // Access Team Name via the Creator's team relationship
             const teamName = task.creator?.teams?.name || 'General';
             
-            // Handle multiple assignees
-            const assignees = task.task_assignments.length > 0 
-                ? task.task_assignments.map(a => a.users.full_name).join(", ") 
-                : 'Unassigned';
+            const assignees = task.task_assignments.map(a => a.users.full_name).join(", ") || 'Unassigned';
             
             tbody.innerHTML += `
                 <tr>
@@ -219,10 +204,112 @@ async function fetchAdminTasks() {
                     <td>${teamName}</td>
                     <td>${assignees}</td>
                     <td><span class="badge ${statusClass}">${statusName}</span></td>
+                    <td>
+                        <button class="btn-secondary btn-sm" onclick="openAssignmentModal('${task.id}')">
+                            <i class="fa-solid fa-user-plus"></i> Assign
+                        </button>
+                    </td>
                 </tr>
             `;
         });
     }
+}
+
+
+async function openAssignmentModal(taskId) {
+    document.getElementById('modal-manage-assignments').classList.remove('hidden-view');
+    document.getElementById('assignment-task-id').value = taskId;
+    
+    const list = document.getElementById('assignment-list');
+    list.innerHTML = 'Loading...';
+
+    // 1. Fetch all employees
+    const { data: employees } = await supabaseClient
+        .from('users')
+        .select('id, full_name')
+        .neq('role', 'Admin'); // Admins usually don't do tasks
+
+    // 2. Fetch current assignments for this task
+    const { data: current } = await supabaseClient
+        .from('task_assignments')
+        .select('employee_id')
+        .eq('task_id', taskId);
+
+    const currentIds = current.map(c => c.employee_id);
+
+    list.innerHTML = '';
+    employees.forEach(emp => {
+        const isChecked = currentIds.includes(emp.id) ? 'checked' : '';
+        list.innerHTML += `
+            <div style="margin-bottom: 8px;">
+                <input type="checkbox" class="assign-checkbox" value="${emp.id}" ${isChecked}>
+                <span>${emp.full_name}</span>
+            </div>
+        `;
+    });
+}
+
+async function saveAssignments() {
+    const taskId = document.getElementById('assignment-task-id').value;
+    const checkboxes = document.querySelectorAll('.assign-checkbox:checked');
+    const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+
+    // 1. Delete all existing assignments for this task
+    await supabaseClient.from('task_assignments').delete().eq('task_id', taskId);
+
+    // 2. Insert new assignments
+    if (selectedIds.length > 0) {
+        const rows = selectedIds.map(uid => ({ task_id: taskId, employee_id: uid }));
+        const { error } = await supabaseClient.from('task_assignments').insert(rows);
+        if(error) { alert("Error assigning: " + error.message); return; }
+    }
+
+    alert("Assignments Updated!");
+    closeModal('manage-assignments');
+    fetchAdminTasks();
+}
+
+/* --- NEW: COMMENTS MODERATION LOGIC --- */
+async function fetchComments() {
+    // [cite: 272] Fetch comments with Author and Task Title
+    const { data: comments, error } = await supabaseClient
+        .from('comments')
+        .select(`
+            id, content, created_at,
+            author:users!comments_author_id_fkey(full_name),
+            task:tasks!comments_task_id_fkey(title)
+        `)
+        .order('created_at', { ascending: false });
+
+    if (error) { console.error(error); return; }
+
+    const tbody = document.getElementById('admin-comments-list');
+    tbody.innerHTML = '';
+
+    comments.forEach(c => {
+        const authorName = c.author ? c.author.full_name : 'Unknown';
+        const taskTitle = c.task ? c.task.title : 'Deleted Task';
+        const date = new Date(c.created_at).toLocaleDateString();
+
+        tbody.innerHTML += `
+            <tr>
+                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${c.content}</td>
+                <td>${authorName}</td>
+                <td>${taskTitle}</td>
+                <td>${date}</td>
+                <td>
+                    <button class="btn-danger btn-sm" onclick="deleteComment('${c.id}')">Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+async function deleteComment(id) {
+    if(!confirm("Permanently delete this comment?")) return;
+    const { error } = await supabaseClient.from('comments').delete().eq('id', id);
+    if(error) alert(error.message);
+    else fetchComments();
 }
 
 
@@ -295,28 +382,90 @@ function exportUsersToCSV() {
 }
 
 function switchAdminTab(tabName) {
-    const usersTab = document.getElementById('admin-users-tab');
-    const tasksTab = document.getElementById('admin-tasks-tab');
+    const tabs = ['users', 'teams', 'tasks', 'comments'];
     
-    // Use classList to remove the !important restriction
-    if (tabName === 'users') {
-        usersTab.classList.remove('hidden-tab');
-        tasksTab.classList.add('hidden-tab');
-    } else if (tabName === 'tasks') {
-        usersTab.classList.add('hidden-tab');
-        tasksTab.classList.remove('hidden-tab');
-        
-        // Reload tasks when switching to ensure data is fresh
-        fetchAdminTasks();
-    }
+    // Hide all tabs
+    tabs.forEach(t => {
+        document.getElementById(`admin-${t}-tab`).classList.add('hidden-tab');
+    });
+
+    // Show selected tab
+    document.getElementById(`admin-${tabName}-tab`).classList.remove('hidden-tab');
+
+    // Fetch Data for specific tabs
+    if (tabName === 'users') fetchUsers();
+    if (tabName === 'teams') fetchTeams();
+    if (tabName === 'tasks') fetchAdminTasks();
+    if (tabName === 'comments') fetchComments();
 
     // Update Sidebar Active State
-    // (Ensure 'event' is captured from the onclick)
     if (typeof event !== 'undefined' && event.currentTarget) {
         const items = document.querySelectorAll('.sidebar-menu li');
         items.forEach(i => i.classList.remove('active-tab'));
         event.currentTarget.classList.add('active-tab');
     }
+}
+
+/* --- NEW: TEAM MANAGEMENT LOGIC --- */
+async function fetchTeams() {
+    // [cite: 269] Fetch teams and join with users to get manager name
+    const { data: teams, error } = await supabaseClient
+        .from('teams')
+        .select(`
+            id, 
+            name, 
+            manager:users!teams_manager_id_fkey(full_name),
+            users!users_team_id_fkey(count)
+        `);
+
+    if (error) { console.error('Error fetching teams:', error); return; }
+
+    const tbody = document.getElementById('admin-team-list');
+    tbody.innerHTML = '';
+
+    teams.forEach(team => {
+        const managerName = team.manager ? team.manager.full_name : 'No Manager';
+        const memberCount = team.users ? team.users[0].count : 0; // Supabase count returns array
+
+        tbody.innerHTML += `
+            <tr>
+                <td><strong>${team.name}</strong></td>
+                <td>${managerName}</td>
+                <td>${memberCount} Members</td>
+                <td>
+                    <button class="btn-secondary btn-sm" onclick="deleteTeam('${team.id}')">Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+async function submitTeam() {
+    const name = document.getElementById('team-name').value;
+    const managerId = document.getElementById('team-manager').value;
+    
+    if(!name) { alert("Team name is required"); return; }
+
+    const payload = {
+        name: name,
+        manager_id: managerId || null
+    };
+
+    const { error } = await supabaseClient.from('teams').insert([payload]);
+
+    if(error) alert("Error: " + error.message);
+    else {
+        alert("Team Saved!");
+        closeModal('manage-team');
+        fetchTeams();
+    }
+}
+
+async function deleteTeam(id) {
+    if(!confirm("Delete this team? Users in this team will become unassigned.")) return;
+    const { error } = await supabaseClient.from('teams').delete().eq('id', id);
+    if(error) alert(error.message);
+    else fetchTeams();
 }
 
 // 3. Manager Dashboard Logic
@@ -427,39 +576,38 @@ async function updateStatus(taskId, newStatusId) {
     }
 }
 
-
-// --- MODAL & DATA HELPERS ---
-
 async function openModal(type) {
-    if (type === 'add-user') {
-        document.getElementById('modal-add-user').classList.remove('hidden-view');
+    if (type === 'manage-team') {
+        document.getElementById('modal-manage-team').classList.remove('hidden-view');
         
-        // Populate Teams Dropdown
-        const { data: teams } = await supabaseClient.from('teams').select('id, name');
-        const teamSelect = document.getElementById('new-user-team');
-        teamSelect.innerHTML = '<option value="">Select a Team</option>';
-        if(teams) {
-            teams.forEach(t => {
-                teamSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-            });
-        }
-
-    } else if (type === 'add-task') {
-        document.getElementById('modal-add-task').classList.remove('hidden-view');
-        
-        // Populate Employees Dropdown for Assignment
-        // We only want to assign tasks to Employees or Managers
-        const { data: users } = await supabaseClient
+        // Populate Managers Dropdown
+        const { data: managers } = await supabaseClient
             .from('users')
             .select('id, full_name')
-            .in('role', ['Employee', 'Manager']);
+            .eq('role', 'Manager');
             
-        const userSelect = document.getElementById('new-task-assignee');
-        userSelect.innerHTML = '<option value="">Select Employee</option>';
-        if(users) {
-            users.forEach(u => {
-                userSelect.innerHTML += `<option value="${u.id}">${u.full_name}</option>`;
+        const select = document.getElementById('team-manager');
+        select.innerHTML = '<option value="">Select a Manager</option>';
+        if(managers) {
+            managers.forEach(m => {
+                select.innerHTML += `<option value="${m.id}">${m.full_name}</option>`;
             });
+        }
+    } 
+    // Handle existing modals (add-user, add-task)
+    else if (type === 'add-user' || type === 'add-task') {
+        if (type === 'add-user') {
+             document.getElementById('modal-add-user').classList.remove('hidden-view');
+             const { data: teams } = await supabaseClient.from('teams').select('id, name');
+             const teamSelect = document.getElementById('new-user-team');
+             teamSelect.innerHTML = '<option value="">Select a Team</option>';
+             if(teams) teams.forEach(t => teamSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`);
+        } else {
+             document.getElementById('modal-add-task').classList.remove('hidden-view');
+             const { data: users } = await supabaseClient.from('users').select('id, full_name').in('role', ['Employee', 'Manager']);
+             const userSelect = document.getElementById('new-task-assignee');
+             userSelect.innerHTML = '<option value="">Select Employee</option>';
+             if(users) users.forEach(u => userSelect.innerHTML += `<option value="${u.id}">${u.full_name}</option>`);
         }
     }
 }

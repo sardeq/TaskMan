@@ -68,90 +68,145 @@
         </div>
     </section>
 
-    <section id="admin-view" class="hidden-view layout-container">
-        <aside class="sidebar">
-            <div>
-                <div class="sidebar-header">
-                    <i class="fa-solid fa-cube"></i> Admin Panel
-                </div>
-                <ul class="sidebar-menu">
-                    <li onclick="switchAdminTab('users')" class="active-tab">
-                        <i class="fa-solid fa-users"></i> <span>Users</span>
-                    </li>
-                    <li onclick="switchAdminTab('tasks')">
-                        <i class="fa-solid fa-layer-group"></i> <span>Task Master</span>
-                    </li>
-                </ul>
+<section id="admin-view" class="hidden-view layout-container">
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <i class="fa-solid fa-cube"></i> Admin Panel
             </div>
-            <div class="sidebar-footer" onclick="handleLogout()">
-                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
-            </div>
-        </aside>
+            <ul class="sidebar-menu">
+                <li onclick="switchAdminTab('users')" class="active-tab">
+                    <i class="fa-solid fa-users"></i> <span>Users</span>
+                </li>
+                <li onclick="switchAdminTab('teams')">
+                    <i class="fa-solid fa-people-group"></i> <span>Teams</span>
+                </li>
+                <li onclick="switchAdminTab('tasks')">
+                    <i class="fa-solid fa-layer-group"></i> <span>Task Master</span>
+                </li>
+                <li onclick="switchAdminTab('comments')">
+                    <i class="fa-solid fa-comments"></i> <span>Comments</span>
+                </li>
+            </ul>
+        </div>
+        <div class="sidebar-footer" onclick="handleLogout()">
+            <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+        </div>
+    </aside>
 
-        <main class="main-content">
-            <div id="admin-users-tab">
-                <h2 class="page-title">User Management</h2>
-                
-                <div class="action-bar">
-                    <div class="search-box">
-                        <i class="fa-solid fa-search"></i>
-                        <input type="text" class="search-input" placeholder="Search users..." onkeyup="filterTable('admin-user-list', this.value)">
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn-primary" onclick="openModal('add-user')">
-                            <i class="fa-solid fa-plus"></i> Add User
-                        </button>
-                        <button class="btn-dark" onclick="exportUsersToCSV()">
-                            <i class="fa-solid fa-download"></i> CSV
-                        </button>
-                    </div>
+    <main class="main-content">
+        <div id="admin-users-tab">
+            <h2 class="page-title">User Management</h2>
+            <div class="action-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" class="search-input" placeholder="Search users..." onkeyup="filterTable('admin-user-list', this.value)">
                 </div>
-                
-                <div class="table-card">
-                    <table class="styled-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Team</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-user-list"></tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div id="admin-tasks-tab" class="hidden-tab">
-                <h2 class="page-title">All System Tasks</h2>
-                
-                <div class="action-bar">
-                    <div class="search-box">
-                        <i class="fa-solid fa-search"></i>
-                        <input type="text" class="search-input" placeholder="Search tasks..." onkeyup="filterTable('admin-task-list', this.value)">
-                    </div>
-                    <button class="btn-primary" onclick="openModal('add-task')">
-                        <i class="fa-solid fa-plus"></i> Create Task
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-primary" onclick="openModal('add-user')">
+                        <i class="fa-solid fa-plus"></i> Add User
+                    </button>
+                    <button class="btn-dark" onclick="exportUsersToCSV()">
+                        <i class="fa-solid fa-download"></i> CSV
                     </button>
                 </div>
-
-                <div class="table-card">
-                    <table class="styled-table">
-                        <thead>
-                            <tr>
-                                <th>Task Name</th>
-                                <th>Team</th>
-                                <th>Assigned To</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-task-list"></tbody>
-                    </table>
-                </div>
             </div>
-        </main>
-    </section>
+            <div class="table-card">
+                <table class="styled-table">
+                    <thead>
+                        <tr><th>Name</th><th>Email</th><th>Role</th><th>Team</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="admin-user-list"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="admin-teams-tab" class="hidden-tab">
+            <h2 class="page-title">Team Management</h2>
+            <div class="action-bar">
+                <button class="btn-primary" onclick="openModal('manage-team')">
+                    <i class="fa-solid fa-plus"></i> Create New Team
+                </button>
+            </div>
+            <div class="table-card">
+                <table class="styled-table">
+                    <thead>
+                        <tr><th>Team Name</th><th>Manager</th><th>Member Count</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="admin-team-list"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="admin-tasks-tab" class="hidden-tab">
+            <h2 class="page-title">All System Tasks</h2>
+            <div class="action-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" class="search-input" placeholder="Search tasks..." onkeyup="filterTable('admin-task-list', this.value)">
+                </div>
+                <button class="btn-primary" onclick="openModal('add-task')">
+                    <i class="fa-solid fa-plus"></i> Create Task
+                </button>
+            </div>
+            <div class="table-card">
+                <table class="styled-table">
+                    <thead>
+                        <tr><th>Task Name</th><th>Team</th><th>Assigned To</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="admin-task-list"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="admin-comments-tab" class="hidden-tab">
+            <h2 class="page-title">Comment Moderation</h2>
+            <div class="table-card">
+                <table class="styled-table">
+                    <thead>
+                        <tr><th>Content</th><th>Author</th><th>Task</th><th>Date</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="admin-comments-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</section>
+
+<div id="modal-manage-team" class="modal-overlay hidden-view">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="team-modal-title">Create Team</h3>
+            <i class="fa-solid fa-times close-btn" onclick="closeModal('manage-team')"></i>
+        </div>
+        <div class="form-group">
+            <label>Team Name</label>
+            <input type="text" id="team-name" class="form-input" placeholder="e.g. Marketing">
+        </div>
+        <div class="form-group">
+            <label>Assign Manager</label>
+            <select id="team-manager" class="form-select">
+                <option value="">Select a Manager</option>
+            </select>
+        </div>
+        <input type="hidden" id="edit-team-id"> 
+        <button class="btn-block" onclick="submitTeam()">Save Team</button>
+    </div>
+</div>
+
+<div id="modal-manage-assignments" class="modal-overlay hidden-view">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Manage Assignments</h3>
+            <i class="fa-solid fa-times close-btn" onclick="closeModal('manage-assignments')"></i>
+        </div>
+        <p style="color: #64748b; font-size: 0.9rem;">Select employees to assign to this task:</p>
+        <div id="assignment-list" style="max-height: 200px; overflow-y: auto; margin: 15px 0; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
+            </div>
+        <input type="hidden" id="assignment-task-id">
+        <button class="btn-block" onclick="saveAssignments()">Update Assignments</button>
+    </div>
+</div>
 
     <section id="manager-view" class="hidden-view layout-container">
         <aside class="sidebar">
