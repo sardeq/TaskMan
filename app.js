@@ -426,3 +426,164 @@ async function updateStatus(taskId, newStatusId) {
         loadEmployeeDashboard(user.id);
     }
 }
+
+
+// --- MODAL & DATA HELPERS ---
+
+async function openModal(type) {
+    if (type === 'add-user') {
+        document.getElementById('modal-add-user').classList.remove('hidden-view');
+        
+        // Populate Teams Dropdown
+        const { data: teams } = await supabaseClient.from('teams').select('id, name');
+        const teamSelect = document.getElementById('new-user-team');
+        teamSelect.innerHTML = '<option value="">Select a Team</option>';
+        if(teams) {
+            teams.forEach(t => {
+                teamSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+            });
+        }
+
+    } else if (type === 'add-task') {
+        document.getElementById('modal-add-task').classList.remove('hidden-view');
+        
+        // Populate Employees Dropdown for Assignment
+        // We only want to assign tasks to Employees or Managers
+        const { data: users } = await supabaseClient
+            .from('users')
+            .select('id, full_name')
+            .in('role', ['Employee', 'Manager']);
+            
+        const userSelect = document.getElementById('new-task-assignee');
+        userSelect.innerHTML = '<option value="">Select Employee</option>';
+        if(users) {
+            users.forEach(u => {
+                userSelect.innerHTML += `<option value="${u.id}">${u.full_name}</option>`;
+            });
+        }
+    }
+}
+
+function closeModal(type) {
+    document.getElementById(`modal-${type}`).classList.add('hidden-view');
+}
+
+// --- FILTER FUNCTION ---
+function filterTable(tableId, query) {
+    const table = document.getElementById(tableId);
+    const rows = table.getElementsByTagName('tr');
+    const lowerQuery = query.toLowerCase();
+
+    for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i].getElementsByTagName('td');
+        let match = false;
+        // Check all text cells in the row
+        for (let j = 0; j < cells.length; j++) {
+            if (cells[j].innerText.toLowerCase().includes(lowerQuery)) {
+                match = true;
+                break;
+            }
+        }
+        rows[i].style.display = match ? '' : 'none';
+    }
+}
+
+// --- CREATE NEW USER LOGIC ---
+async function submitNewUser() {
+    const name = document.getElementById('new-user-name').value;
+    const email = document.getElementById('new-user-email').value;
+    const password = document.getElementById('new-user-pass').value;
+    const role = document.getElementById('new-user-role').value;
+    const teamId = document.getElementById('new-user-team').value;
+
+    if(!email || !password || !name) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    // 1. Register in Supabase Auth
+    // NOTE: In a real app, this might log the admin out. 
+    // For this prototype, we'll proceed, but be aware of session changes.
+    const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password,
+        options: { data: { full_name: name } }
+    });
+
+    if (authError) {
+        alert("Auth Error: " + authError.message);
+        return;
+    }
+
+    // 2. Add details to public.users table
+    const { error: dbError } = await supabaseClient
+        .from('users')
+        .insert([{
+            id: authData.user.id,
+            email: email,
+            full_name: name,
+            role: role,
+            team_id: teamId || null,
+            status: 'Active'
+        }]);
+
+    if (dbError) {
+        alert("Database Error: " + dbError.message);
+    } else {
+        alert("User Created Successfully!");
+        closeModal('add-user');
+        fetchUsers(); // Refresh list
+    }
+}
+
+// --- CREATE NEW TASK LOGIC ---
+async function submitNewTask() {
+    const title = document.getElementById('new-task-title').value;
+    const desc = document.getElementById('new-task-desc').value;
+    const deadline = document.getElementById('new-task-date').value;
+    const priority = document.getElementById('new-task-priority').value;
+    const assigneeId = document.getElementById('new-task-assignee').value;
+
+    // Get current Admin ID (Creator)
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    if(!title || !assigneeId || !deadline) {
+        alert("Please fill required fields (Title, Assignee, Deadline)");
+        return;
+    }
+
+    // 1. Insert Task
+    const { data: taskData, error: taskError } = await supabaseClient
+        .from('tasks')
+        .insert([{
+            title: title,
+            description: desc,
+            deadline: deadline,
+            priority_id: parseInt(priority),
+            status_id: 1, // Default to Pending
+            creator_id: user.id
+        }])
+        .select()
+        .single();
+
+    if (taskError) {
+        alert("Error creating task: " + taskError.message);
+        return;
+    }
+
+    // 2. Assign Task to User (Insert into Junction Table)
+    const { error: assignError } = await supabaseClient
+        .from('task_assignments')
+        .insert([{
+            task_id: taskData.id,
+            employee_id: assigneeId
+        }]);
+
+    if (assignError) {
+        alert("Task created but assignment failed: " + assignError.message);
+    } else {
+        alert("Task Created & Assigned!");
+        closeModal('add-task');
+        fetchAdminTasks(); // Refresh list
+    }
+}
