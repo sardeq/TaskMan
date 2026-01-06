@@ -133,8 +133,6 @@ async function loadAdminDashboard() {
 }
 
 async function fetchUsers() {
-    // FIX: We explicitly specify the foreign key constraint to disambiguate the relationship.
-    // We want the team the user BELONGS to (users.team_id), not the one they manage.
     const { data: users, error } = await supabaseClient
         .from('users')
         .select(`
@@ -169,7 +167,7 @@ async function fetchUsers() {
                 <td>${teamName}</td>
                 <td><span class="badge ${statusClass}">${status}</span></td>
                 <td>
-                    <button class="btn-secondary" style="padding: 5px 10px;">Edit</button>
+                    <button class="btn-secondary" style="padding: 5px 10px;" onclick="editUserRole('${user.id}', '${user.role}')">Edit</button>
                     <button class="btn-secondary" style="padding: 5px 10px; color: red; border-color: red;" onclick="deleteUser('${user.id}')">Delete</button>
                 </td>
             </tr>
@@ -179,17 +177,18 @@ async function fetchUsers() {
 }
 
 async function fetchAdminTasks() {
-    // FIX: Correctly nest the Many-to-Many query
-    // Tasks -> Task_Assignments -> Users
     const { data: tasks, error } = await supabaseClient
         .from('tasks')
         .select(`
             id,
             title, 
             task_statuses(name), 
-            teams(name), 
-            task_assignments(
-                users(full_name)
+            creator:users!tasks_creator_id_fkey (
+                full_name,
+                teams!users_team_id_fkey (name)
+            ),
+            task_assignments (
+                users (full_name)
             )
         `); 
 
@@ -203,24 +202,60 @@ async function fetchAdminTasks() {
 
     if(tasks) {
         tasks.forEach(task => {
-            const statusClass = getStatusClass(task.task_statuses?.name);
-            const teamName = task.teams ? task.teams.name : 'General';
+            const statusName = task.task_statuses?.name || 'Unknown';
+            const statusClass = getStatusClass(statusName);
             
-            // Handle multiple assignees (since it's an array now)
-            // We map through the assignments to get all user names
+            // Access Team Name via the Creator's team relationship
+            const teamName = task.creator?.teams?.name || 'General';
+            
+            // Handle multiple assignees
             const assignees = task.task_assignments.length > 0 
                 ? task.task_assignments.map(a => a.users.full_name).join(", ") 
                 : 'Unassigned';
             
             tbody.innerHTML += `
                 <tr>
-                    <td>${task.title}</td>
+                    <td><strong>${task.title}</strong></td>
                     <td>${teamName}</td>
                     <td>${assignees}</td>
-                    <td><span class="badge ${statusClass}">${task.task_statuses?.name}</span></td>
+                    <td><span class="badge ${statusClass}">${statusName}</span></td>
                 </tr>
             `;
         });
+    }
+}
+
+
+async function deleteUser(userId) {
+    if(!confirm("Are you sure you want to delete this user? This cannot be undone.")) return;
+
+    // Delete from public.users
+    const { error } = await supabaseClient
+        .from('users')
+        .delete()
+        .eq('id', userId);
+
+    if(error) {
+        alert("Error deleting user: " + error.message);
+    } else {
+        alert("User deleted from database.");
+        fetchUsers(); // Refresh the table
+    }
+}
+
+async function editUserRole(userId, currentRole) {
+    const newRole = prompt("Enter new role (Admin, Manager, Employee):", currentRole);
+    if (!newRole || newRole === currentRole) return;
+
+    const { error } = await supabaseClient
+        .from('users')
+        .update({ role: newRole })
+        .eq('id', userId);
+
+    if (error) {
+        alert("Update failed: " + error.message);
+    } else {
+        fetchUsers(); // Refresh
     }
 }
 

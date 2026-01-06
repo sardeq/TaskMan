@@ -219,3 +219,36 @@ body {
     .sidebar-menu span { display: none; } /* Hide text on mobile */
     .active-view { flex-direction: column; }
 }
+
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    margin-right: 5px;
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: var(--text-main);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: #cbd5e1;
+}
+
+.btn-danger {
+    background: white;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+.btn-danger:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* Fix table row height */
+.styled-table td {
+    vertical-align: middle;
+}
