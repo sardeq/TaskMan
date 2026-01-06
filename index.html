@@ -250,8 +250,8 @@
         </main>
     </section>
 
-<section id="employee-view" class="hidden-view kanban-layout">
-    <aside class="sidebar icon-only-sidebar">
+<section id="employee-view" class="hidden-view">
+    <aside class="icon-only-sidebar">
         <div class="sidebar-header">
             <i class="fa-solid fa-cube fa-2x"></i>
         </div>
@@ -267,21 +267,22 @@
 
     <div class="kanban-area">
         <div class="employee-header">
-            <p class="breadcrumbs">Tasks > Today</p>
-            <h2 class="page-title">Task Management</h2>
+            <p class="breadcrumbs">Tasks > Dashboard</p>
+            <h2 class="page-title" style="margin:0">My Tasks</h2>
         </div>
         
         <div class="kanban-board-grid">
             <div class="kanban-col">
-                <div class="col-header">DRAFT</div>
-                <div id="col-pending" class="task-container"></div>
+                <div class="col-header"><span class="dot dot-draft"></span> TO DO</div>
+                <div id="col-pending" class="task-container">
+                    </div>
             </div>
             <div class="kanban-col">
-                <div class="col-header">IN PROGRESS</div>
+                <div class="col-header"><span class="dot dot-progress"></span> IN PROGRESS</div>
                 <div id="col-progress" class="task-container"></div>
             </div>
             <div class="kanban-col">
-                <div class="col-header">DONE</div>
+                <div class="col-header"><span class="dot dot-done"></span> COMPLETED</div>
                 <div id="col-completed" class="task-container"></div>
             </div>
         </div>
@@ -290,12 +291,12 @@
     <div class="info-sidebar">
         <div class="employee-profile-header">
             <div class="avatar-circle" id="emp-initials">SO</div>
-            <h4 id="emp-name">Loading...</h4>
-            <div class="stats-badge" id="emp-total-count">Completed: 0</div>
+            <h3 id="emp-name" style="margin:0; color:var(--primary)">Loading...</h3>
+            <span class="stats-badge" id="emp-total-count" style="margin-top:5px; display:block">Completed: 0</span>
         </div>
 
         <div class="efficiency-card">
-            <h4>Efficiency</h4>
+            <h4 style="text-align:center; color:var(--text-muted); margin-bottom:15px">WEEKLY EFFICIENCY</h4>
             <div class="gauge-wrapper">
                 <div class="gauge-bg"></div>
                 <div class="gauge-fill" id="efficiency-gauge"></div>
@@ -304,15 +305,62 @@
         </div>
 
         <div class="schedule-section">
-            <div class="schedule-header">
-                <h4>Schedule</h4>
-                <i class="fa-solid fa-calendar"></i>
-            </div>
-            <div id="schedule-list" class="schedule-list-container">
-                </div>
+            <h4 style="color:var(--primary); font-size:0.9rem; margin-bottom:15px">
+                <i class="fa-solid fa-calendar" style="margin-right:8px"></i> Upcoming Deadlines
+            </h4>
+            <div id="schedule-list"></div>
         </div>
     </div>
 </section>
+
+<div id="modal-task-details" class="modal-overlay hidden-view">
+    <div class="modal-card wide-modal">
+        <div class="modal-header no-border">
+            <h3 id="modal-task-title" style="font-size:1.2rem; font-weight:700">TASK-###</h3>
+            <i class="fa-solid fa-times close-btn" onclick="closeModal('task-details')"></i>
+        </div>
+        
+        <div class="modal-body-grid">
+            <div class="task-info-panel">
+                <label><i class="fa-solid fa-align-left"></i> Description</label>
+                <p id="modal-task-desc">Loading...</p>
+                
+                <div style="display:flex; gap:20px;">
+                    <div>
+                        <label>Assigned To</label>
+                        <p id="modal-task-assignee">--</p>
+                    </div>
+                    <div>
+                        <label>Due Date</label>
+                        <p id="modal-task-deadline">--</p>
+                    </div>
+                </div>
+
+                <hr style="border:0; border-top:1px solid #eee; margin: 20px 0;">
+                
+                <label><i class="fa-solid fa-comments"></i> Discussion</label>
+                <div id="modal-comments-list" class="comments-scroll"></div>
+                <div class="comment-input-area">
+                    <input type="text" id="new-comment-text" placeholder="Type a comment..." />
+                    <button onclick="submitComment()" class="btn-dark"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+
+            <div class="task-actions-panel">
+                <label>Status & Priority</label>
+                <div id="modal-priority-flag" class="priority-flag">
+                    Loading...
+                </div>
+
+                <div style="margin-top: auto;">
+                    <label style="margin-bottom:10px">Actions</label>
+                    <div id="modal-action-buttons">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div id="modal-task-details" class="modal-overlay hidden-view">
     <div class="modal-card wide-modal">
