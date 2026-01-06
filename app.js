@@ -294,20 +294,29 @@ function exportUsersToCSV() {
     link.click();
 }
 
-// Tab Switching Logic
 function switchAdminTab(tabName) {
-    // Hide all tabs
-    document.getElementById('admin-users-tab').style.display = 'none';
-    document.getElementById('admin-tasks-tab').style.display = 'none';
+    const usersTab = document.getElementById('admin-users-tab');
+    const tasksTab = document.getElementById('admin-tasks-tab');
     
-    // Show selected
-    if(tabName === 'users') document.getElementById('admin-users-tab').style.display = 'block';
-    if(tabName === 'tasks') document.getElementById('admin-tasks-tab').style.display = 'block';
+    // Use classList to remove the !important restriction
+    if (tabName === 'users') {
+        usersTab.classList.remove('hidden-tab');
+        tasksTab.classList.add('hidden-tab');
+    } else if (tabName === 'tasks') {
+        usersTab.classList.add('hidden-tab');
+        tasksTab.classList.remove('hidden-tab');
+        
+        // Reload tasks when switching to ensure data is fresh
+        fetchAdminTasks();
+    }
 
     // Update Sidebar Active State
-    const items = document.querySelectorAll('.sidebar-menu li');
-    items.forEach(i => i.classList.remove('active-tab'));
-    event.currentTarget.classList.add('active-tab');
+    // (Ensure 'event' is captured from the onclick)
+    if (typeof event !== 'undefined' && event.currentTarget) {
+        const items = document.querySelectorAll('.sidebar-menu li');
+        items.forEach(i => i.classList.remove('active-tab'));
+        event.currentTarget.classList.add('active-tab');
+    }
 }
 
 // 3. Manager Dashboard Logic
