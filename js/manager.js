@@ -53,6 +53,10 @@ export async function loadManagerAnalytics() {
     // Update Efficiency Gauge
     const efficiency = total === 0 ? 0 : Math.round((completed / total) * 100);
     document.getElementById('manager-efficiency-text').innerText = `${efficiency}%`;
+    const bar = document.getElementById('manager-efficiency-bar');
+    if(bar) {
+        bar.style.width = `${efficiency}%`;
+    }
     const gradientStop = (efficiency / 100) * 100; 
     document.getElementById('manager-efficiency-gauge').style.background = 
         `conic-gradient(var(--accent) 0% ${gradientStop}%, transparent ${gradientStop}% 100%)`;
