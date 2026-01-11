@@ -42,41 +42,99 @@ export async function fetchUsers() {
     const { data: users, error } = await supabaseClient
         .from('users')
         .select(`
-            id, 
-            full_name, 
-            email, 
-            role, 
+            id, full_name, email, role, 
             teams!users_team_id_fkey(name)
-        `); 
+        `)
+        .order('full_name');
 
-    if (error) {
-        console.error('Error fetching users:', error);
-        return;
-    }
+    if (error) { console.error('Error fetching users:', error); return; }
 
     const tbody = document.getElementById('admin-user-list');
     tbody.innerHTML = '';
 
     users.forEach(user => {
         const teamName = user.teams ? user.teams.name : 'Unassigned';
-        const status = 'Active'; // Placeholder
-        const statusClass = 'status-active';
+        const statusClass = user.status === 'Inactive' ? 'status-pending' : 'status-active';
         
         const row = `
             <tr>
-                <td><strong>${user.full_name}</strong></td>
-                <td>${user.email}</td>
-                <td>${user.role}</td>
-                <td>${teamName}</td>
-                <td><span class="badge ${statusClass}">${status}</span></td>
                 <td>
-                    <button class="btn-secondary" style="padding: 5px 10px;" onclick="editUserRole('${user.id}', '${user.role}')">Edit</button>
-                    <button class="btn-secondary" style="padding: 5px 10px; color: red; border-color: red;" onclick="deleteUser('${user.id}')">Delete</button>
+                    <div style="font-weight:600;">${user.full_name}</div>
+                </td>
+                <td style="color:var(--text-muted); font-size:0.9rem;">${user.email}</td>
+                <td><span class="badge" style="background:#f1f5f9; color:var(--primary)">${user.role}</span></td>
+                <td>${teamName}</td>
+                <td>
+                    <button class="btn-secondary btn-sm" onclick="openEditUserModal('${user.id}')">
+                        <i class="fa-solid fa-pen"></i> Edit
+                    </button>
+                    <button class="btn-danger btn-sm" onclick="deleteUser('${user.id}')">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
                 </td>
             </tr>
         `;
         tbody.innerHTML += row;
     });
+}
+
+// --- NEW FUNCTIONS FOR EDITING ---
+
+export async function openEditUserModal(userId) {
+    const modal = document.getElementById('modal-edit-user');
+    if(modal) modal.classList.remove('hidden-view');
+
+    // 1. Fetch User Details & All Teams in parallel
+    const [userRes, teamRes] = await Promise.all([
+        supabaseClient.from('users').select('*').eq('id', userId).single(),
+        supabaseClient.from('teams').select('id, name')
+    ]);
+
+    if(userRes.error) { alert("Error fetching user: " + userRes.error.message); return; }
+
+    const user = userRes.data;
+    const teams = teamRes.data || [];
+
+    // 2. Populate Fields
+    document.getElementById('edit-user-id').value = user.id;
+    document.getElementById('edit-user-email').value = user.email;
+    document.getElementById('edit-user-name').value = user.full_name;
+    document.getElementById('edit-user-role').value = user.role;
+
+    // 3. Populate Team Select
+    const teamSelect = document.getElementById('edit-user-team');
+    teamSelect.innerHTML = '<option value="">No Team / Unassigned</option>';
+    
+    teams.forEach(t => {
+        const selected = user.team_id === t.id ? 'selected' : '';
+        teamSelect.innerHTML += `<option value="${t.id}" ${selected}>${t.name}</option>`;
+    });
+}
+
+export async function saveUserChanges() {
+    const id = document.getElementById('edit-user-id').value;
+    const name = document.getElementById('edit-user-name').value;
+    const role = document.getElementById('edit-user-role').value;
+    const teamId = document.getElementById('edit-user-team').value;
+
+    if(!name) { alert("Name cannot be empty"); return; }
+
+    const { error } = await supabaseClient
+        .from('users')
+        .update({
+            full_name: name,
+            role: role,
+            team_id: teamId || null
+        })
+        .eq('id', id);
+
+    if (error) {
+        alert("Update failed: " + error.message);
+    } else {
+        alert("User Profile Updated!");
+        closeModal('edit-user');
+        fetchUsers();
+    }
 }
 
 export async function submitNewUser() {
@@ -532,3 +590,5 @@ window.saveAssignments = saveAssignments;
 window.openModal = openModal;
 window.fetchComments = fetchComments;
 window.deleteComment = deleteComment;
+window.openEditUserModal = openEditUserModal;
+window.saveUserChanges = saveUserChanges;
