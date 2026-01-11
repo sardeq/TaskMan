@@ -252,9 +252,9 @@ export async function fetchAdminTasks() {
         .from('tasks')
         .select(`
             id, title, task_statuses(name), 
-            creator:users!tasks_creator_id_fkey(teams(name)),
+            creator:users!creator_id(teams(name)), 
             task_assignments(users(full_name))
-        `); 
+        `);
 
     if (error) return;
 

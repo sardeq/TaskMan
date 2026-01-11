@@ -57,9 +57,6 @@ export async function loadManagerAnalytics() {
     if(bar) {
         bar.style.width = `${efficiency}%`;
     }
-    const gradientStop = (efficiency / 100) * 100; 
-    document.getElementById('manager-efficiency-gauge').style.background = 
-        `conic-gradient(var(--accent) 0% ${gradientStop}%, transparent ${gradientStop}% 100%)`;
 
     // Render Charts
     renderManagerCharts(completed, pending, progress, tasks);
@@ -111,7 +108,7 @@ export async function loadManagerTeamTasks() {
             *, 
             task_statuses(name),
             task_assignments(users(full_name)),
-            creator:users!tasks_creator_id_fkey(teams(name, id))
+            creator:users!creator_id(teams(name, id))
         `);
 
     managerTasksCache = tasks || [];
