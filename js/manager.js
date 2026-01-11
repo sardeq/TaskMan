@@ -1,6 +1,7 @@
 // js/manager.js
 import { supabaseClient } from './config.js';
 import { switchView } from './utils.js';
+// REMOVED: import { renderTaskCard } from './employee.js';  <-- This was causing the crash
 
 let managerTasksCache = [];
 
@@ -99,32 +100,64 @@ function renderManagerCharts(completed, pending, progress, tasks) {
     });
 }
 
-/* --- TEAM TASKS TAB --- */
-
 export async function loadManagerTeamTasks() {
-    const { data: tasks } = await supabaseClient
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    // 1. Get the Manager's Team ID
+    const { data: managerProfile } = await supabaseClient
+        .from('users')
+        .select('team_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!managerProfile || !managerProfile.team_id) {
+        document.getElementById('manager-task-rows').innerHTML = '<p class="empty-state">You are not assigned to a team.</p>';
+        return;
+    }
+
+    // 2. Fetch tasks assigned to ANYONE in this team
+    // We join task_assignments -> users -> filter by team_id
+    const { data: tasks, error } = await supabaseClient
         .from('tasks')
         .select(`
-            *, 
+            *,
             task_statuses(name),
-            task_assignments(users(full_name)),
-            creator:users!creator_id(teams(name, id))
-        `);
+            task_priorities(name),
+            task_assignments!inner(
+                users!inner(full_name, team_id)
+            )
+        `)
+        .eq('task_assignments.users.team_id', managerProfile.team_id);
 
-    managerTasksCache = tasks || [];
-    renderTeamTasksList(managerTasksCache);
-    loadTeamFilter();
+    if (error) { 
+        console.error("Manager Task Error:", error); 
+        return; 
+    }
+
+    renderTeamTasksList(tasks || []);
 }
 
 function renderTeamTasksList(tasks) {
     const container = document.getElementById('manager-task-rows');
     container.innerHTML = '';
 
+    if (tasks.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fa-solid fa-clipboard-check"></i>
+                <p>No active tasks found for your team.</p>
+            </div>`;
+        return;
+    }
+
     tasks.forEach(task => {
         const status = task.task_statuses.name;
-        const assignees = task.task_assignments.map(a => a.users.full_name).join(', ') || 'Unassigned';
-        const teamName = task.creator?.teams?.name || 'General';
+        // Collect all assignees
+        const assignees = task.task_assignments.map(a => a.users.full_name).join(', ');
+        
         const date = new Date(task.deadline).toLocaleDateString();
+        const priority = task.task_priorities?.name || 'Medium';
+        const priorityClass = priority.toLowerCase() === 'high' ? 'text-danger' : 'text-muted';
 
         let progressPercent = 0;
         let color = '#e2e8f0';
@@ -132,27 +165,39 @@ function renderTeamTasksList(tasks) {
         if(status === 'In Progress') { progressPercent = 50; color = '#3b82f6'; }
         if(status === 'Completed') { progressPercent = 100; color = '#10b981'; }
 
-        // Note: openTaskDetails is exposed globally by employee.js, so this onclick works
         container.innerHTML += `
             <div class="task-row-card" style="border-left-color: ${color}">
                 <div class="task-row-info">
-                    <h4 style="margin:0;">${task.title} - ${status} - ${progressPercent}%</h4>
-                    <div class="progress-track">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h4 style="margin:0;">${task.title}</h4>
+                        <span class="badge ${getStatusClass(status)}">${status}</span>
+                    </div>
+                    <div class="progress-track" style="margin-top:8px;">
                         <div class="progress-fill" style="width: ${progressPercent}%; background: ${color}"></div>
                     </div>
                 </div>
                 <div class="task-row-meta">
-                    <div><i class="fa-solid fa-user"></i> ${assignees}</div>
+                    <div><i class="fa-solid fa-users"></i> ${assignees}</div>
                     <div><i class="fa-solid fa-calendar"></i> ${date}</div>
-                    <div style="margin-top:5px; font-weight:bold; color:var(--accent)">${teamName}</div>
+                    <div class="${priorityClass}"><i class="fa-solid fa-flag"></i> ${priority}</div>
                 </div>
-                <div style="margin-left: 20px;">
-                     <button class="btn-secondary btn-sm" onclick="openTaskDetails('${task.id}')">Details</button>
+                <div style="margin-left: 20px; display:flex; gap: 5px;">
+                     <button class="btn-secondary btn-sm" onclick="openTaskDetails('${task.id}')">View</button>
+                     <button class="btn-secondary btn-sm" onclick="enableEditTask('${task.id}')"><i class="fa-solid fa-pen"></i></button>
                      <button class="btn-danger btn-sm" onclick="deleteTask('${task.id}')"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>
         `;
     });
+}
+
+// Helper needed for badge style
+function getStatusClass(status) {
+    switch(status) {
+        case 'Completed': return 'status-completed';
+        case 'In Progress': return 'status-medium';
+        default: return 'status-pending';
+    }
 }
 
 export async function loadTeamFilter() {
@@ -209,8 +254,7 @@ export async function deleteTask(taskId) {
     else loadManagerTeamTasks(); 
 }
 
-// Helper: Duplicate of employee renderTaskCard to keep Manager module self-contained
-// (In a stricter setup, you would import this from a shared 'ui-utils.js')
+// Helper: Self-contained render function for Manager personal tasks
 function renderTaskCard(task) {
     const status = task.task_statuses.name;
     let actionBtn = '';
@@ -238,11 +282,10 @@ export function resetTeamFilter() {
     renderTeamTasksList(managerTasksCache);
 }
 
-
+// Window Assignments
 window.loadManagerDashboard = loadManagerDashboard;
 window.switchManagerTab = switchManagerTab;
 window.renderTeamTasksList = renderTeamTasksList;
 window.filterTasksByTeam = filterTasksByTeam;
 window.deleteTask = deleteTask;
 window.resetTeamFilter = resetTeamFilter;
-

@@ -183,6 +183,58 @@ export async function openTaskDetails(taskId) {
     }
 }
 
+export async function enableEditTask(taskId) {
+    // 1. Open the details modal first to get data
+    await openTaskDetails(taskId);
+
+    // 2. Transform the Modal into "Edit Mode"
+    const titleEl = document.getElementById('modal-task-title');
+    const descEl = document.getElementById('modal-task-desc');
+    const btnContainer = document.getElementById('modal-action-buttons');
+
+    // Remove the "TASK-" prefix for editing
+    const currentTitle = titleEl.innerText.split(': ')[1] || titleEl.innerText;
+    const currentDesc = descEl.innerText;
+
+    titleEl.innerHTML = `<input type="text" id="edit-task-title" class="form-input" value="${currentTitle}" />`;
+    descEl.innerHTML = `<textarea id="edit-task-desc" class="form-input" rows="4">${currentDesc}</textarea>`;
+
+    // Add Save Button
+    btnContainer.innerHTML = `
+        <button class="btn-block btn-primary" onclick="saveTaskChanges('${taskId}')">
+            <i class="fa-solid fa-save"></i> Save Changes
+        </button>
+        <button class="btn-block btn-secondary" onclick="openTaskDetails('${taskId}')">
+            Cancel
+        </button>
+    `;
+}
+
+export async function saveTaskChanges(taskId) {
+    const newTitle = document.getElementById('edit-task-title').value;
+    const newDesc = document.getElementById('edit-task-desc').value;
+
+    const { error } = await supabaseClient
+        .from('tasks')
+        .update({ title: newTitle, description: newDesc })
+        .eq('id', taskId);
+
+    if (error) {
+        alert("Error updating task: " + error.message);
+    } else {
+        alert("Task updated successfully");
+        openTaskDetails(taskId); // Reload view mode
+        
+        // Refresh dashboard if needed
+        if(window.loadManagerTeamTasks) window.loadManagerTeamTasks();
+        if(window.fetchAdminTasks) window.fetchAdminTasks();
+    }
+}
+
+// Expose to window
+window.enableEditTask = enableEditTask;
+window.saveTaskChanges = saveTaskChanges;
+
 export async function fetchTaskComments(taskId) {
     const list = document.getElementById('modal-comments-list');
     list.innerHTML = 'Loading...';

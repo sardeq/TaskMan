@@ -272,3 +272,94 @@ body {
     .sidebar-brand span, .sidebar-menu span, .sidebar-footer span { display: none; }
     .sidebar-menu li { justify-content: center; padding: 12px; }
 }
+
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    background: white;
+    border-radius: 12px;
+    border: 2px dashed var(--border);
+    color: var(--text-muted);
+}
+.empty-state i {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    color: #cbd5e1;
+}
+
+/* --- PRIORITY FLAGS & TEXT --- */
+.text-danger { color: var(--danger) !important; font-weight: 600; }
+.text-warning { color: var(--warning) !important; }
+.text-muted { color: var(--text-muted) !important; }
+
+/* --- ANIMATED LOADING SKELETON (Optional but nice) --- */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}
+.loading-row {
+    height: 40px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* --- IMPROVED MODAL INPUTS --- */
+.modal-card input:focus, .modal-card textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+/* --- TASK ROW CARD (Manager View) --- */
+.task-row-card {
+    background: white;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--accent); /* Default color */
+    display: grid;
+    grid-template-columns: 1.5fr 1.5fr auto; /* Info | Meta | Actions */
+    align-items: center;
+    transition: transform 0.2s;
+}
+
+.task-row-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.progress-track {
+    width: 100%;
+    height: 6px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    border-radius: 10px;
+}
+
+.task-row-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.task-row-meta i { margin-right: 6px; }
+
+/* Mobile responsiveness for the new row card */
+@media (max-width: 768px) {
+    .task-row-card {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .task-row-meta {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+}

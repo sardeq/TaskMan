@@ -247,42 +247,77 @@ export async function deleteTeam(id) {
    TASK MASTER LOGIC
    ============================ */
 
+// In js/admin.js
+
 export async function fetchAdminTasks() {
+    const tbody = document.getElementById('admin-task-list');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>';
+
     const { data: tasks, error } = await supabaseClient
         .from('tasks')
         .select(`
-            id, title, task_statuses(name), 
-            creator:users!creator_id(teams(name)), 
+            id, title, status_id, priority_id, deadline,
+            task_statuses(name), 
+            task_priorities(name),
+            creator:users!creator_id(teams!users_team_id_fkey(name)), 
             task_assignments(users(full_name))
-        `);
+        `)
+        .order('created_at', { ascending: false });
 
-    if (error) return;
+    if (error) {
+        console.error("Admin Task Fetch Error:", error);
+        tbody.innerHTML = `<tr><td colspan="5" style="color:red;">Error: ${error.message}</td></tr>`;
+        return;
+    }
 
-    const tbody = document.getElementById('admin-task-list');
     tbody.innerHTML = '';
 
-    if(tasks) {
-        tasks.forEach(task => {
-            const statusName = task.task_statuses?.name || 'Unknown';
-            const statusClass = getStatusClass(statusName);
-            const teamName = task.creator?.teams?.name || 'General';
-            const assignees = task.task_assignments.map(a => a.users.full_name).join(", ") || 'Unassigned';
-            
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>${task.title}</strong></td>
-                    <td>${teamName}</td>
-                    <td>${assignees}</td>
-                    <td><span class="badge ${statusClass}">${statusName}</span></td>
-                    <td>
-                        <button class="btn-secondary btn-sm" onclick="openAssignmentModal('${task.id}')">
-                            <i class="fa-solid fa-user-plus"></i> Assign
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
+    if(!tasks || tasks.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#999;">No tasks found in the system.</td></tr>`;
+        return;
     }
+
+    tasks.forEach(task => {
+        const statusName = task.task_statuses?.name || 'Unknown';
+        const priorityName = task.task_priorities?.name || 'Normal';
+        
+        // Handle the nested team name safely
+        const teamName = task.creator?.teams?.name || 'General';
+        
+        const assignees = task.task_assignments.map(a => a.users.full_name).join(", ") || '<span style="color:#ccc">Unassigned</span>';
+        
+        const priorityBadge = priorityName === 'High' 
+            ? '<span class="badge" style="background:#fee2e2; color:#b91c1c">High</span>' 
+            : priorityName === 'Medium' 
+            ? '<span class="badge" style="background:#fff7ed; color:#c2410c">Medium</span>'
+            : '<span class="badge" style="background:#f1f5f9; color:#475569">Low</span>';
+
+        tbody.innerHTML += `
+            <tr>
+                <td>
+                    <strong>${task.title}</strong><br>
+                    <small style="color:#aaa;">Due: ${new Date(task.deadline).toLocaleDateString()}</small>
+                </td>
+                <td>${teamName}</td>
+                <td>${assignees}</td>
+                <td>
+                    <span class="badge ${getStatusClass(statusName)}">${statusName}</span>
+                    ${priorityBadge}
+                </td>
+                <td>
+                    <button class="btn-secondary btn-sm" onclick="openAssignmentModal('${task.id}')" title="Assign Users">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </button>
+                    <button class="btn-secondary btn-sm" onclick="enableEditTask('${task.id}')" title="Edit">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="btn-danger btn-sm" onclick="deleteTask('${task.id}')" title="Delete">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
 }
 
 export async function submitNewTask() {
