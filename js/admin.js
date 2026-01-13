@@ -111,8 +111,8 @@ export async function openEditUserModal(userId) {
 
     // 3. Populate Team Select (Fixed Logic)
     const teamSelect = document.getElementById('edit-user-team');
-    teamSelect.innerHTML = '<option value="">No Team / Unassigned</option>'; // Reset
-    
+    teamSelect.innerHTML = '<option value="">No Team / Unassigned</option>';
+
     teams.forEach(t => {
         // Create option element properly to ensure 'selected' works
         const option = document.createElement('option');
