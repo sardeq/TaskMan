@@ -363,3 +363,28 @@ body {
         gap: 10px;
     }
 }
+
+
+.charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.chart-wrapper {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    height: 350px; /* Fixed height to prevent "way too big" issue */
+    position: relative;
+}
+
+/* Mobile responsive for charts */
+@media (max-width: 768px) {
+    .charts-row {
+        grid-template-columns: 1fr;
+    }
+}

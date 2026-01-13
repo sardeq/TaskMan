@@ -162,7 +162,7 @@
         </aside>
 
         <main class="main-content">
-            <div id="manager-analytics-tab">
+<div id="manager-analytics-tab">
                 <h2 class="page-title" style="margin-bottom: 24px;">Dashboard Analytics</h2>
                 
                 <div class="stats-grid">
@@ -183,9 +183,19 @@
                     </div>
                 </div>
 
-                <div class="card">
-                    <h4 style="margin-top: 0;">Task Distribution</h4>
-                    <div style="height: 300px;"><canvas id="managerPieChart"></canvas></div>
+                <div class="charts-row">
+                    <div class="chart-wrapper">
+                        <h4 style="margin-top: 0; color:var(--text-muted)">Task Distribution</h4>
+                        <div style="position: relative; height: 100%; width: 100%;">
+                            <canvas id="managerPieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h4 style="margin-top: 0; color:var(--text-muted)">Team Workload</h4>
+                        <div style="position: relative; height: 100%; width: 100%;">
+                            <canvas id="managerBarChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
 
