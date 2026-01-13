@@ -34,33 +34,35 @@ export function switchAdminTab(tabName) {
     }
 }
 
-/* ============================
-   USER MANAGEMENT
-   ============================ */
-
 export async function fetchUsers() {
+    // 1. Fetch data
     const { data: users, error } = await supabaseClient
         .from('users')
         .select(`
-            id, full_name, email, role, 
-            teams!users_team_id_fkey(name)
+            id, full_name, email, role, team_id,
+            teams:teams!users_team_id_fkey(name) 
         `)
         .order('full_name');
 
-    if (error) { console.error('Error fetching users:', error); return; }
+    if (error) { 
+        console.error('Error fetching users:', error); 
+        // Show error in table so you know it failed
+        document.getElementById('admin-user-list').innerHTML = `<tr><td colspan="5" style="color:red">Error loading users: ${error.message}</td></tr>`;
+        return; 
+    }
 
     const tbody = document.getElementById('admin-user-list');
     tbody.innerHTML = '';
 
+    // 2. Render Rows
     users.forEach(user => {
+        // Safe check for team name. Supabase returns an object for 1:1 relations.
+        // If team is null, user.teams will be null.
         const teamName = user.teams ? user.teams.name : 'Unassigned';
-        const statusClass = user.status === 'Inactive' ? 'status-pending' : 'status-active';
         
         const row = `
             <tr>
-                <td>
-                    <div style="font-weight:600;">${user.full_name}</div>
-                </td>
+                <td><div style="font-weight:600;">${user.full_name}</div></td>
                 <td style="color:var(--text-muted); font-size:0.9rem;">${user.email}</td>
                 <td><span class="badge" style="background:#f1f5f9; color:var(--primary)">${user.role}</span></td>
                 <td>${teamName}</td>
@@ -78,11 +80,13 @@ export async function fetchUsers() {
     });
 }
 
-// --- NEW FUNCTIONS FOR EDITING ---
-
 export async function openEditUserModal(userId) {
     const modal = document.getElementById('modal-edit-user');
-    if(modal) modal.classList.remove('hidden-view');
+    if (modal) modal.classList.remove('hidden-view');
+
+    // Clear previous values / Show loading state
+    document.getElementById('edit-user-name').value = "Loading...";
+    document.getElementById('edit-user-team').innerHTML = '<option>Loading...</option>';
 
     // 1. Fetch User Details & All Teams in parallel
     const [userRes, teamRes] = await Promise.all([
@@ -90,7 +94,11 @@ export async function openEditUserModal(userId) {
         supabaseClient.from('teams').select('id, name')
     ]);
 
-    if(userRes.error) { alert("Error fetching user: " + userRes.error.message); return; }
+    if (userRes.error) { 
+        alert("Error fetching user: " + userRes.error.message); 
+        closeModal('edit-user');
+        return; 
+    }
 
     const user = userRes.data;
     const teams = teamRes.data || [];
@@ -101,13 +109,22 @@ export async function openEditUserModal(userId) {
     document.getElementById('edit-user-name').value = user.full_name;
     document.getElementById('edit-user-role').value = user.role;
 
-    // 3. Populate Team Select
+    // 3. Populate Team Select (Fixed Logic)
     const teamSelect = document.getElementById('edit-user-team');
-    teamSelect.innerHTML = '<option value="">No Team / Unassigned</option>';
+    teamSelect.innerHTML = '<option value="">No Team / Unassigned</option>'; // Reset
     
     teams.forEach(t => {
-        const selected = user.team_id === t.id ? 'selected' : '';
-        teamSelect.innerHTML += `<option value="${t.id}" ${selected}>${t.name}</option>`;
+        // Create option element properly to ensure 'selected' works
+        const option = document.createElement('option');
+        option.value = t.id;
+        option.innerText = t.name;
+        
+        // Robust check for ID match
+        if (user.team_id && user.team_id === t.id) {
+            option.selected = true;
+        }
+        
+        teamSelect.appendChild(option);
     });
 }
 
@@ -117,26 +134,28 @@ export async function saveUserChanges() {
     const role = document.getElementById('edit-user-role').value;
     const teamId = document.getElementById('edit-user-team').value;
 
-    if(!name) { alert("Name cannot be empty"); return; }
-
-    const { error } = await supabaseClient
+    // ADDED .select() at the end
+    const { data, error } = await supabaseClient
         .from('users')
         .update({
             full_name: name,
             role: role,
             team_id: teamId || null
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select(); // <--- CRITICAL FIX
 
     if (error) {
         alert("Update failed: " + error.message);
     } else {
-        alert("User Profile Updated!");
         closeModal('edit-user');
-        fetchUsers();
+        await fetchUsers(); // Now this will definitely get the new data
+        
+        // Restore search if you were searching
+        const searchVal = document.querySelector('.search-input').value;
+        if(searchVal) filterTable('admin-user-list', searchVal);
     }
 }
-
 export async function submitNewUser() {
     const name = document.getElementById('new-user-name').value;
     const email = document.getElementById('new-user-email').value;

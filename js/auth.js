@@ -81,3 +81,16 @@ export async function checkUserRole(userId) {
 window.handleLogin = handleLogin;
 window.handleSignup = handleSignup;
 window.handleLogout = handleLogout;
+
+supabaseClient.auth.getSession().then(({ data: { session } }) => {
+    if (session) {
+        // If logged in, redirect to their dashboard
+        checkUserRole(session.user.id);
+    }
+});
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT') {
+        window.switchView('login');
+    }
+});

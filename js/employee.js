@@ -217,15 +217,16 @@ export async function saveTaskChanges(taskId) {
     const { error } = await supabaseClient
         .from('tasks')
         .update({ title: newTitle, description: newDesc })
-        .eq('id', taskId);
+        .eq('id', taskId)
+        .select(); // <--- CRITICAL FIX
 
     if (error) {
         alert("Error updating task: " + error.message);
     } else {
         alert("Task updated successfully");
-        openTaskDetails(taskId); // Reload view mode
+        openTaskDetails(taskId);
         
-        // Refresh dashboard if needed
+        // Refresh the lists in the background
         if(window.loadManagerTeamTasks) window.loadManagerTeamTasks();
         if(window.fetchAdminTasks) window.fetchAdminTasks();
     }
