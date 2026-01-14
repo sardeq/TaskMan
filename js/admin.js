@@ -320,11 +320,6 @@ export async function deleteTeam(id) {
     else fetchTeams();
 }
 
-/* ============================
-   TASK MASTER LOGIC
-   ============================ */
-
-// In js/admin.js
 
 export async function fetchAdminTasks() {
     const tbody = document.getElementById('admin-task-list');
