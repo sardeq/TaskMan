@@ -1,5 +1,6 @@
 import { supabaseClient } from './config.js';
 import { closeModal, switchView } from './utils.js';
+import { createNotification } from './features.js';
 
 export async function loadAdminDashboard() {
     switchView('admin');
@@ -489,6 +490,9 @@ export async function saveAssignments() {
         const rows = selectedIds.map(uid => ({ task_id: taskId, employee_id: uid }));
         const { error } = await supabaseClient.from('task_assignments').insert(rows);
         if(error) { alert("Error assigning: " + error.message); return; }
+        selectedIds.forEach(uid => {
+            createNotification(uid, "New Assignment", "You have been assigned to a new task.");
+        });
     }
 
     alert("Assignments Updated!");

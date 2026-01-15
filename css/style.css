@@ -388,3 +388,77 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+
+.nav-actions { display: flex; align-items: center; gap: 15px; }
+.icon-btn {
+    background: transparent; border: none; color: white;
+    font-size: 1.2rem; cursor: pointer; position: relative;
+    transition: 0.2s;
+}
+.icon-btn:hover { color: var(--accent); }
+.badge-count {
+    position: absolute; top: -5px; right: -5px;
+    background: var(--danger); color: white;
+    font-size: 0.65rem; padding: 2px 5px; border-radius: 10px;
+    font-weight: bold; border: 2px solid var(--primary);
+}
+
+/* Notification Panel (Slide-over) */
+.notification-panel {
+    position: fixed; top: 0; right: -350px; width: 320px; height: 100vh;
+    background: var(--bg-surface); box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+    z-index: 2000; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex; flex-direction: column; border-left: 1px solid var(--border);
+}
+.notification-panel.open { right: 0; }
+
+.notif-header {
+    padding: 20px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--bg-body);
+}
+.notif-list { flex: 1; overflow-y: auto; padding: 0; margin: 0; list-style: none; }
+
+.notif-item {
+    padding: 15px 20px; border-bottom: 1px solid var(--border);
+    transition: 0.2s; cursor: pointer; position: relative;
+}
+.notif-item:hover { background: var(--bg-body); }
+.notif-item.unread { background: #f0f9ff; border-left: 4px solid var(--accent); }
+.notif-item.unread:hover { background: #e0f2fe; }
+/* Dark mode fix for unread */
+[data-theme="dark"] .notif-item.unread { background: #1e293b; border-left-color: var(--accent); }
+
+.notif-time { font-size: 0.75rem; color: var(--text-muted); margin-top: 5px; }
+
+/* Settings Modal Specifics */
+.theme-toggle-wrapper {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px;
+}
+
+/* --- DARK MODE VARIABLES --- */
+[data-theme="dark"] {
+    --primary: #020617;       /* Very Dark Navy */
+    --primary-light: #0f172a; 
+    --bg-body: #0f172a;       /* Slate 900 */
+    --bg-surface: #1e293b;    /* Slate 800 */
+    --text-main: #f1f5f9;     /* Slate 100 */
+    --text-muted: #94a3b8;    /* Slate 400 */
+    --border: #334155;        /* Slate 700 */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+}
+
+/* Dark mode overrides for specific elements */
+[data-theme="dark"] .sidebar { background: #020617; border-right-color: #1e293b; }
+[data-theme="dark"] .task-card-modern, 
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .task-row-card,
+[data-theme="dark"] .kanban-col { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .auth-input, 
+[data-theme="dark"] .form-input, 
+[data-theme="dark"] .form-select {
+    background: #0f172a; color: white; border-color: #334155;
+}
+[data-theme="dark"] .empty-state { background: #1e293b; }
