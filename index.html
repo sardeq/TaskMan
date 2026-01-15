@@ -87,6 +87,10 @@
                 <div class="header-flex">
                     <h2 class="page-title">User Management</h2>
                     <div style="display: flex; gap: 10px;">
+                        <button class="icon-btn" onclick="toggleNotificationPanel()" style="color: var(--primary); margin-right: 15px;">
+                            <i class="fa-solid fa-bell"></i>
+                            <span id="notification-badge" class="badge-count" style="display:none">0</span>
+                        </button>
                         <div class="search-box">
                             <i class="fa-solid fa-search"></i>
                             <input type="text" class="search-input" placeholder="Search..." onkeyup="filterTable('admin-user-list', this.value)">
@@ -172,6 +176,11 @@
         <main class="main-content">
 <div id="manager-analytics-tab">
                 <h2 class="page-title" style="margin-bottom: 24px;">Dashboard Analytics</h2>
+
+                <button class="icon-btn" onclick="toggleNotificationPanel()" style="color: var(--primary);">
+        <i class="fa-solid fa-bell"></i>
+        <span id="notification-badge-mgr" class="badge-count" style="display:none">0</span>
+    </button>
                 
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -258,6 +267,11 @@
 
         <div class="main-content">
             <h2 class="page-title" style="margin-bottom: 24px;">My Tasks</h2>
+
+            <button class="icon-btn" onclick="toggleNotificationPanel()" style="color: var(--primary);">
+                <i class="fa-solid fa-bell"></i>
+                <span id="notification-badge-emp" class="badge-count" style="display:none">0</span>
+            </button>
             <div class="kanban-board-grid">
                 <div class="kanban-col">
                     <div class="col-header"><span class="dot dot-draft"></span> To Do</div>
