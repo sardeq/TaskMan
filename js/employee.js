@@ -218,7 +218,7 @@ export async function saveTaskChanges(taskId) {
         .from('tasks')
         .update({ title: newTitle, description: newDesc })
         .eq('id', taskId)
-        .select(); // <--- CRITICAL FIX
+        .select();
 
     if (error) {
         alert("Error updating task: " + error.message);
@@ -240,9 +240,10 @@ export async function fetchTaskComments(taskId) {
     const list = document.getElementById('modal-comments-list');
     list.innerHTML = 'Loading...';
 
+    // CHANGED: Added role to the select query
     const { data: comments } = await supabaseClient
         .from('comments')
-        .select(`content, created_at, users(full_name)`)
+        .select(`content, created_at, users(full_name, role)`)
         .eq('task_id', taskId)
         .order('created_at', {ascending: true});
 
@@ -253,9 +254,20 @@ export async function fetchTaskComments(taskId) {
     }
 
     comments.forEach(c => {
+        // CHANGED: Check if role is Manager and apply specific class
+        const isManager = c.users.role === 'Manager';
+        const cssClass = isManager ? 'comment-item manager-comment' : 'comment-item';
+        
+        // Added styling for the label (Manager)
+        const roleBadge = isManager ? '<span style="font-size:0.7rem; background:var(--accent); color:white; padding:2px 6px; border-radius:4px; margin-left:5px;">MANAGER</span>' : '';
+
         list.innerHTML += `
-            <div style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:5px;">
-                <strong>${c.users.full_name}:</strong> ${c.content}
+            <div class="${cssClass}">
+                <div style="font-size:0.85rem; margin-bottom:4px;">
+                    <strong>${c.users.full_name}</strong> ${roleBadge}
+                </div>
+                <div style="color:var(--text-main);">${c.content}</div>
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">${new Date(c.created_at).toLocaleString()}</div>
             </div>
         `;
     });

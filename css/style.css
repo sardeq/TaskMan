@@ -1,4 +1,3 @@
-/* --- VARIABLES & RESET --- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
@@ -669,4 +668,24 @@ body {
 [data-theme="dark"] .btn-card-secondary[style*="background:var(--success)"] {
     background: rgba(16, 185, 129, 0.2) !important;
     color: #34d399 !important;
+}
+
+/* --- COMMENT STYLING --- */
+.comment-item {
+    margin-bottom: 8px; 
+    border-bottom: 1px solid var(--border); 
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.manager-comment {
+    background-color: #fefce8; /* Light Yellow */
+    border: 1px solid #fcd34d;
+    border-left: 4px solid #f59e0b;
+}
+
+[data-theme="dark"] .manager-comment {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+    border-left-color: #f59e0b;
 }
