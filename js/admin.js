@@ -70,7 +70,7 @@ export async function fetchUsers() {
                 <td>${teamName}</td>
                 <td>
                     <button class="btn-secondary btn-sm" onclick="openEditUserModal('${user.id}')">
-                        <i class="fa-solid fa-pen"></i> Edit
+                        <i class="fa-solid fa-pen" style="margin-right:4px;"></i> Edit
                     </button>
                     <button class="btn-danger btn-sm" onclick="deleteUser('${user.id}')">
                         <i class="fa-solid fa-trash"></i>
