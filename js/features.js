@@ -1,8 +1,6 @@
-// features.js
 import { supabaseClient } from './config.js';
 import { openModal, closeModal } from './utils.js';
 
-/* --- THEME SETTINGS --- */
 export function initTheme() {
     const savedTheme = localStorage.getItem('app-theme');
     if (savedTheme === 'dark') {
@@ -23,12 +21,10 @@ export function toggleTheme() {
     }
 }
 
-/* --- NOTIFICATIONS SYSTEM --- */
 export async function loadNotifications() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
 
-    // Fetch notifications
     const { data: notifs, error } = await supabaseClient
         .from('notifications')
         .select('*')
@@ -37,23 +33,27 @@ export async function loadNotifications() {
         .limit(20);
 
     if (error) console.error(error);
-    
     renderNotifications(notifs || []);
 }
 
 function renderNotifications(notifs) {
     const list = document.getElementById('notification-list');
     const badge = document.getElementById('notification-badge');
+    const badgeMgr = document.getElementById('notification-badge-mgr');
+    const badgeEmp = document.getElementById('notification-badge-emp');
+
     if(!list) return;
 
     list.innerHTML = '';
     
-    // Count unread
     const unreadCount = notifs.filter(n => !n.is_read).length;
-    if(badge) {
-        badge.innerText = unreadCount;
-        badge.style.display = unreadCount > 0 ? 'block' : 'none';
-    }
+    
+    [badge, badgeMgr, badgeEmp].forEach(b => {
+        if(b) {
+            b.innerText = unreadCount;
+            b.style.display = unreadCount > 0 ? 'block' : 'none';
+        }
+    });
 
     if (notifs.length === 0) {
         list.innerHTML = '<li style="padding:20px; text-align:center; color:var(--text-muted)">No notifications</li>';
@@ -74,7 +74,6 @@ function renderNotifications(notifs) {
 }
 
 async function markAsRead(id, element) {
-    // Optimistic UI update
     element.classList.remove('unread');
     
     await supabaseClient
@@ -82,7 +81,6 @@ async function markAsRead(id, element) {
         .update({ is_read: true })
         .eq('id', id);
     
-    // Refresh count logic strictly if needed, or just decrement visually
     const badge = document.getElementById('notification-badge');
     if(badge && badge.innerText !== '0') {
         const current = parseInt(badge.innerText);
@@ -97,7 +95,6 @@ export async function createNotification(userId, title, message) {
         .insert([{ user_id: userId, title, message }]);
 }
 
-/* --- UI ACTIONS --- */
 export function toggleNotificationPanel() {
     const panel = document.getElementById('notification-panel');
     if(panel) {
@@ -173,7 +170,6 @@ export async function checkDeadlines() {
 }
 
 export async function notifyTaskStatusChange(taskId, newStatusName) {
-    // 1. Get all employees assigned to this task
     const { data: assignments } = await supabaseClient
         .from('task_assignments')
         .select('employee_id, task:tasks(title)')
@@ -181,7 +177,6 @@ export async function notifyTaskStatusChange(taskId, newStatusName) {
 
     if(!assignments) return;
 
-    // 2. Send notification to each
     for (const a of assignments) {
         await createNotification(
             a.employee_id,

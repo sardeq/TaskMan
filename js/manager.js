@@ -29,30 +29,27 @@ export function switchManagerTab(tabName) {
 }
 
 /* --- ANALYTICS TAB --- */
-
 export async function loadManagerAnalytics() {
     const { data: { user } } = await supabaseClient.auth.getUser();
 
-    // Fetch tasks related to this manager's team for better analytics
-    // First get team ID
+    // Safe check for team
     const { data: mgrData } = await supabaseClient.from('users').select('team_id').eq('id', user.id).single();
     
     let query = supabaseClient.from('tasks').select(`*, task_statuses(name), task_assignments!inner(users!inner(team_id))`);
     
-    // If manager has a team, filter by it. If not, showing all might be confusing, but we'll stick to team data.
     if(mgrData && mgrData.team_id) {
         query = query.eq('task_assignments.users.team_id', mgrData.team_id);
     }
 
     const { data: tasks, error } = await query;
-
     if (error) { console.error(error); return; }
 
-    // Metrics
-    const total = tasks.length;
-    const completed = tasks.filter(t => t.task_statuses.name === 'Completed').length;
-    const pending = tasks.filter(t => t.task_statuses.name === 'Pending').length;
-    const progress = tasks.filter(t => t.task_statuses.name === 'In Progress').length;
+    // Safe Metrics
+    const safeTasks = tasks || [];
+    const total = safeTasks.length;
+    const completed = safeTasks.filter(t => t.task_statuses?.name === 'Completed').length;
+    const pending = safeTasks.filter(t => t.task_statuses?.name === 'Pending').length;
+    const progress = safeTasks.filter(t => t.task_statuses?.name === 'In Progress').length;
     
     document.getElementById('manager-stat-completed').innerText = completed;
     document.getElementById('manager-stat-pending').innerText = pending;
@@ -62,18 +59,17 @@ export async function loadManagerAnalytics() {
     const bar = document.getElementById('manager-efficiency-bar');
     if(bar) bar.style.width = `${efficiency}%`;
 
-    renderManagerCharts(completed, pending, progress, tasks);
+    renderManagerCharts(completed, pending, progress, safeTasks);
 }
 
 function renderManagerCharts(completed, pending, progress, tasks) {
     if(typeof Chart === 'undefined') return;
 
-    // 1. PIE CHART
     const ctxPie = document.getElementById('managerPieChart').getContext('2d');
     if (window.mgrPie) window.mgrPie.destroy();
 
     window.mgrPie = new Chart(ctxPie, {
-        type: 'doughnut', // Changed to doughnut for cleaner look
+        type: 'doughnut',
         data: {
             labels: ['Completed', 'Pending', 'In Progress'],
             datasets: [{
@@ -82,18 +78,12 @@ function renderManagerCharts(completed, pending, progress, tasks) {
                 borderWidth: 0
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false, // Vital for fitting the container
-            plugins: { legend: { position: 'bottom' } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
     });
 
-    // 2. BAR CHART (New)
     const ctxBar = document.getElementById('managerBarChart').getContext('2d');
     if (window.mgrBar) window.mgrBar.destroy();
 
-    // Calculate generic workload (mock logic: distribution by priority)
     const high = tasks.filter(t => t.priority_id === 3).length;
     const med = tasks.filter(t => t.priority_id === 2).length;
     const low = tasks.filter(t => t.priority_id === 1).length;
@@ -101,25 +91,19 @@ function renderManagerCharts(completed, pending, progress, tasks) {
     window.mgrBar = new Chart(ctxBar, {
         type: 'bar',
         data: {
-            labels: ['High Priority', 'Medium Priority', 'Low Priority'],
+            labels: ['High', 'Medium', 'Low'],
             datasets: [{
-                label: 'Task Count',
+                label: 'Tasks',
                 data: [high, med, low],
                 backgroundColor: ['#ef4444', '#f97316', '#94a3b8'],
                 borderRadius: 4
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, grid: { display: false } } },
-            plugins: { legend: { display: false } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { display: false } } }, plugins: { legend: { display: false } } }
     });
 }
 
-/* --- TEAM TASKS TAB --- */
-
+/* --- TEAM TASKS TAB (FIXED ROBUSTNESS) --- */
 export async function loadManagerTeamTasks() {
     const { data: { user } } = await supabaseClient.auth.getUser();
 
@@ -131,6 +115,8 @@ export async function loadManagerTeamTasks() {
         return;
     }
 
+    // Removed !inner to ensure we don't crash on empty assignments, but kept logic mostly same
+    // Added safety logs
     const { data: tasks, error } = await supabaseClient
         .from('tasks')
         .select(`
@@ -142,7 +128,11 @@ export async function loadManagerTeamTasks() {
         .eq('task_assignments.users.team_id', managerProfile.team_id)
         .order('created_at', { ascending: false });
 
-    if (error) { console.error("Manager Task Error:", error); return; }
+    if (error) { 
+        console.error("Manager Task Error:", error); 
+        document.getElementById('manager-task-rows').innerHTML = `<p class="empty-state" style="color:red">Error loading tasks: ${error.message}</p>`;
+        return; 
+    }
     
     managerTasksCache = tasks || [];
     renderTeamTasksList(managerTasksCache);
@@ -162,11 +152,17 @@ function renderTeamTasksList(tasks) {
     }
 
     tasks.forEach(task => {
-        const status = task.task_statuses.name;
-        const assignees = task.task_assignments.map(a => a.users.full_name).join(', ');
-        const date = new Date(task.deadline).toLocaleDateString();
+        // [FIX] Added optional chaining (?.) to prevent crashes if relations are missing
+        const status = task.task_statuses?.name || 'Unknown';
         const priority = task.task_priorities?.name || 'Normal';
         const priorityClass = priority === 'High' ? 'text-danger' : 'text-muted';
+        
+        // Handle assignments array safely
+        const assignees = (task.task_assignments || [])
+            .map(a => a.users?.full_name || 'Unknown')
+            .join(', ');
+
+        const date = new Date(task.deadline).toLocaleDateString();
 
         let progressPercent = 0;
         let color = '#e2e8f0';
@@ -209,7 +205,6 @@ function getStatusClass(status) {
 }
 
 /* --- MY TASKS TAB (Personal) --- */
-
 export async function loadManagerPersonalTasks() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     
@@ -218,7 +213,6 @@ export async function loadManagerPersonalTasks() {
         .select(`task:tasks (*, task_priorities(name), task_statuses(name))`)
         .eq('employee_id', user.id);
 
-    // Clear Columns
     ['pending', 'progress', 'completed'].forEach(c => {
         const el = document.getElementById(`mgr-col-${c}`);
         if(el) el.innerHTML = '';
@@ -226,24 +220,25 @@ export async function loadManagerPersonalTasks() {
 
     if(!assignments) return;
 
-    const tasks = assignments.map(a => a.task);
-
-    tasks.forEach(task => {
-        const status = task.task_statuses.name;
-        let colId = '';
-        if(status === 'Pending') colId = 'mgr-col-pending';
-        else if(status === 'In Progress') colId = 'mgr-col-progress';
-        else colId = 'mgr-col-completed';
-
-        const col = document.getElementById(colId);
-        if(col) col.innerHTML += renderPersonalTaskCard(task); 
+    assignments.forEach(a => {
+        if(a.task) renderPersonalTaskCard(a.task);
     });
 }
 
 function renderPersonalTaskCard(task) {
-    const status = task.task_statuses.name;
+    // [FIX] Safe navigation
+    const status = task.task_statuses?.name || 'Pending';
+    const priority = task.task_priorities?.name || 'Normal';
+    
+    let colId = '';
+    if(status === 'Pending') colId = 'mgr-col-pending';
+    else if(status === 'In Progress') colId = 'mgr-col-progress';
+    else colId = 'mgr-col-completed';
+
+    const col = document.getElementById(colId);
+    if(!col) return;
+
     let actionBtn = '';
-    // Uses updateManagerTaskStatus to avoid dependency on employee.js
     if(status === 'Pending') {
         actionBtn = `<button class="btn-card-secondary" onclick="updateManagerTaskStatus('${task.id}', 2)">Start</button>`;
     } else if (status === 'In Progress') {
@@ -252,9 +247,9 @@ function renderPersonalTaskCard(task) {
         actionBtn = `<button class="btn-card-secondary" style="background:var(--success); cursor:default;">Done</button>`;
     }
 
-    return `
+    col.innerHTML += `
         <div class="task-card-modern">
-            <span class="card-tag">PRIORITY: ${task.task_priorities.name}</span>
+            <span class="card-tag">PRIORITY: ${priority}</span>
             <h4 class="card-title">${task.title}</h4>
             <div class="card-actions">
                 <button class="btn-card-primary" onclick="openTaskDetails('${task.id}')">View</button>
@@ -273,6 +268,7 @@ export async function updateManagerTaskStatus(taskId, newStatusId) {
     if (error) {
         alert("Error updating: " + error.message);
     } else {
+        // [NEW] Notification trigger on start
         if (parseInt(newStatusId) === 2) {
             await notifyTaskStatusChange(taskId, "In Progress");
         }

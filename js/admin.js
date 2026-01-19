@@ -2,6 +2,7 @@ import { supabaseClient } from './config.js';
 import { closeModal, switchView } from './utils.js';
 import { createNotification } from './features.js';
 
+
 export async function loadAdminDashboard() {
     switchView('admin');
     fetchUsers();
@@ -437,9 +438,19 @@ export async function submitNewTask() {
     if (assignError) {
         alert("Task created but assignment failed: " + assignError.message);
     } else {
+        // [NEW] Send Notification to the assignee
+        await createNotification(
+            assigneeId,
+            "New Assignment",
+            `You have been assigned a new task: "${title}".`
+        );
+
         alert("Task Created & Assigned!");
         closeModal('add-task');
-        fetchAdminTasks();
+        
+        // Refresh appropriate dashboard
+        if(window.fetchAdminTasks) window.fetchAdminTasks();
+        if(window.loadManagerTeamTasks) window.loadManagerTeamTasks();
     }
 }
 
