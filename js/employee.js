@@ -1,6 +1,6 @@
-// js/employee.js
 import { supabaseClient } from './config.js';
 import { switchView, closeModal } from './utils.js';
+import { notifyTaskStatusChange } from './features.js';
 
 let currentOpenTaskId = null; // Track which task is currently open in the modal
 
@@ -292,12 +292,15 @@ export async function updateTaskStatus(taskId, newStatusId) {
         alert("Error updating: " + error.message);
     } else {
         closeModal('task-details');
-        const { data: { user } } = await supabaseClient.auth.getUser();
         
+        if (parseInt(newStatusId) === 2) {
+            await notifyTaskStatusChange(taskId, "In Progress");
+        }
+
+        const { data: { user } } = await supabaseClient.auth.getUser();
         loadEmployeeDashboard(user.id);
     }
 }
-
 window.loadEmployeeDashboard = loadEmployeeDashboard;
 window.openTaskDetails = openTaskDetails;
 window.submitComment = submitComment;

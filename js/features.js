@@ -92,7 +92,6 @@ async function markAsRead(id, element) {
 }
 
 export async function createNotification(userId, title, message) {
-    // Helper to send a notification (used by Admin/Manager)
     await supabaseClient
         .from('notifications')
         .insert([{ user_id: userId, title, message }]);
@@ -107,7 +106,6 @@ export function toggleNotificationPanel() {
     }
 }
 
-/* --- USER SETTINGS --- */
 export async function updateOwnProfile() {
     const newName = document.getElementById('settings-name').value;
     const { data: { user } } = await supabaseClient.auth.getUser();
@@ -122,7 +120,74 @@ export async function updateOwnProfile() {
     if(error) alert("Error: " + error.message);
     else {
         alert("Profile Updated");
-        location.reload(); // Simple reload to reflect changes everywhere
+        location.reload(); 
+    }
+}
+
+export async function checkDeadlines() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+
+    // 1. Get user's incomplete tasks
+    const { data: assignments } = await supabaseClient
+        .from('task_assignments')
+        .select(`
+            task:tasks (
+                id, title, deadline, status_id, task_statuses(name)
+            )
+        `)
+        .eq('employee_id', user.id);
+
+    if (!assignments) return;
+
+    const now = new Date();
+    const tomorrow = new Date();
+    tomorrow.setHours(tomorrow.getHours() + 24);
+
+    for (const item of assignments) {
+        const task = item.task;
+        
+        if (task.task_statuses.name === 'Completed') continue;
+
+        const deadline = new Date(task.deadline);
+
+        if (deadline > now && deadline <= tomorrow) {
+            
+            const { data: existing } = await supabaseClient
+                .from('notifications')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('title', 'Upcoming Deadline')
+                .ilike('message', `%${task.title}%`)
+                .gt('created_at', new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString());
+
+            if (!existing || existing.length === 0) {
+                await createNotification(
+                    user.id, 
+                    "Upcoming Deadline", 
+                    `Task "${task.title}" is due in less than 24 hours.`
+                );
+            }
+        }
+    }
+}
+
+export async function notifyTaskStatusChange(taskId, newStatusName) {
+    // 1. Get all employees assigned to this task
+    const { data: assignments } = await supabaseClient
+        .from('task_assignments')
+        .select('employee_id, task:tasks(title)')
+        .eq('task_id', taskId);
+
+    if(!assignments) return;
+
+    // 2. Send notification to each
+    for (const a of assignments) {
+        await createNotification(
+            a.employee_id,
+            "Task Update",
+            `Task "${a.task.title}" is now ${newStatusName}.`
+        );
     }
 }
 

@@ -1,5 +1,6 @@
 import { supabaseClient } from './config.js';
 import { switchView, closeModal } from './utils.js';
+import { createNotification, notifyTaskStatusChange } from './features.js';
 
 let managerTasksCache = [];
 
@@ -263,7 +264,6 @@ function renderPersonalTaskCard(task) {
     `;
 }
 
-// Local function to handle status updates for Managers
 export async function updateManagerTaskStatus(taskId, newStatusId) {
     const { error } = await supabaseClient
         .from('tasks')
@@ -273,11 +273,14 @@ export async function updateManagerTaskStatus(taskId, newStatusId) {
     if (error) {
         alert("Error updating: " + error.message);
     } else {
-        loadManagerPersonalTasks(); // Refresh board
-        loadManagerAnalytics(); // Refresh stats
+        if (parseInt(newStatusId) === 2) {
+            await notifyTaskStatusChange(taskId, "In Progress");
+        }
+        
+        loadManagerPersonalTasks(); 
+        loadManagerAnalytics(); 
     }
 }
-
 export async function deleteTask(taskId) {
     if(!confirm("Are you sure? This will remove the task for everyone.")) return;
     const { error } = await supabaseClient.from('tasks').delete().eq('id', taskId);
