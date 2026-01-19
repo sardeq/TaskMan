@@ -64,7 +64,7 @@
                     <i class="fa-solid fa-users"></i> <span>Users</span>
                 </li>
                 <li onclick="switchAdminTab('teams')">
-                    <i class="fa-solid fa-people-group"></i> <span>Teams</span>
+                    <i class="fa-solid fa-user-group"></i> <span>Teams</span>
                 </li>
                 <li onclick="switchAdminTab('tasks')">
                     <i class="fa-solid fa-layer-group"></i> <span>Task Master</span>
@@ -72,13 +72,15 @@
                 <li onclick="switchAdminTab('comments')">
                     <i class="fa-solid fa-comments"></i> <span>Comments</span>
                 </li>
-
-                                <li onclick="openModal('settings')">
-                    <i class="fa-solid fa-gear"></i> <span>Settings</span>
-                </li>
             </ul>
-            <div class="sidebar-footer" onclick="handleLogout()">
-                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+            
+            <div class="sidebar-bottom">
+                <div class="sidebar-bottom-item" onclick="openModal('settings')">
+                    <i class="fa-solid fa-gear"></i> <span>Settings</span>
+                </div>
+                <div class="sidebar-bottom-item logout-btn" onclick="handleLogout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+                </div>
             </div>
         </aside>
 
@@ -163,13 +165,15 @@
                 <li onclick="switchManagerTab('my-tasks')" id="tab-my-tasks">
                     <i class="fa-solid fa-user-clock"></i> <span>My Tasks</span>
                 </li>
-
-                                <li onclick="openModal('settings')">
-                    <i class="fa-solid fa-gear"></i> <span>Settings</span>
-                </li>
             </ul>
-            <div class="sidebar-footer" onclick="handleLogout()">
-                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+            
+            <div class="sidebar-bottom">
+                <div class="sidebar-bottom-item" onclick="openModal('settings')">
+                    <i class="fa-solid fa-gear"></i> <span>Settings</span>
+                </div>
+                <div class="sidebar-bottom-item logout-btn" onclick="handleLogout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+                </div>
             </div>
         </aside>
 
@@ -252,14 +256,15 @@
             </div>
             <ul class="sidebar-menu">
                 <li class="active-tab"><i class="fa-solid fa-table-columns"></i> <span>Board</span></li>
-
-                
-                                <li onclick="openModal('settings')">
-                    <i class="fa-solid fa-gear"></i> <span>Settings</span>
-                </li>
             </ul>
-            <div class="sidebar-footer" onclick="handleLogout()">
-                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+            
+            <div class="sidebar-bottom">
+                <div class="sidebar-bottom-item" onclick="openModal('settings')">
+                    <i class="fa-solid fa-gear"></i> <span>Settings</span>
+                </div>
+                <div class="sidebar-bottom-item logout-btn" onclick="handleLogout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+                </div>
             </div>
         </aside>
 
